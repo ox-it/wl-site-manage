@@ -111,12 +111,12 @@
 		$tlang.getString("sinfo.enter3")#if ($!isProjectSite) $tlang.getString("sinfo.simplea") <span class ="reqStarInline">*</span> $tlang.getString("sinfo.means") #end
 	</p>
 		<p class="shorttext required">
-			#if (!$!isCourseSite)
+			#if ($titleEditableSiteType)
 			<span class="reqStar">*</span>
 			<label for="title">
 				$tlang.getString("sinfo.stitle")
 			</label>
-				<input type="text" name="title" class="req" id="title" maxlength="20" size="20" value="$validator.escapeHtml($form_title)" />
+				<input type="text" name="title" class="req" id="title" maxlength="$!titleMaxLength" size="20" value="$validator.escapeHtml($form_title)" />
 			#else
 			<label for="title">
 				$tlang.getString("sinfo.stitle")

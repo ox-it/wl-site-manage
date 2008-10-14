@@ -20,6 +20,7 @@
  **********************************************************************************/
 package org.sakaiproject.site.tool;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -44,6 +45,9 @@ import java.util.Set;
 import java.util.Vector;
 
 import javax.servlet.ServletException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -111,10 +115,13 @@ import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.sitemanage.api.SectionField;
+import org.sakaiproject.sitemanage.api.SiteHelper;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
 import org.sakaiproject.time.cover.TimeService;
 import org.sakaiproject.tool.api.Tool;
+import org.sakaiproject.tool.api.ToolException;
+import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
 import org.sakaiproject.user.api.User;
@@ -172,6 +179,10 @@ public class SiteAction extends PagedResourceActionII {
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
 	private static final String SITE_MODE_SITEINFO = "siteinfo";
+	
+	private static final String SITE_MODE_HELPER = "helper";
+	
+	private static final String SITE_MODE_HELPER_DONE = "helper.done";
 
 	private static final String STATE_SITE_MODE = "site_mode";
 
@@ -535,6 +546,9 @@ public class SiteAction extends PagedResourceActionII {
 
 	// types of site whose title can be editable
 	public static final String TITLE_EDITABLE_SITE_TYPE = "title_editable_site_type";
+	
+	// maximum length of a site title
+	private  static final String STATE_SITE_TITLE_MAX = "site_title_max_length";
 
 	// types of site where site view roster permission is editable
 	public static final String EDIT_VIEW_ROSTER_SITE_TYPE = "edit_view_roster_site_type";
@@ -611,6 +625,20 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	protected void initState(SessionState state, VelocityPortlet portlet,
 			JetspeedRunData rundata) {
+		
+
+		// Cleanout if the helper has been asked to start afresh.
+		if (state.getAttribute(SiteHelper.SITE_CREATE_START) != null) {
+			cleanState(state);
+			cleanStateHelper(state);
+			
+			// Removed from possible previous invokations.
+			state.removeAttribute(SiteHelper.SITE_CREATE_START);
+			state.removeAttribute(SiteHelper.SITE_CREATE_CANCELLED);
+			state.removeAttribute(SiteHelper.SITE_CREATE_SITE_ID);
+			
+		}
+		
 		super.initState(state, portlet, rundata);
 
 		// store current userId in state
@@ -725,10 +753,19 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(EDIT_VIEW_ROSTER_SITE_TYPE, siteTypes);
 		}
 
-		// get site tool mode from tool registry
-		String site_mode = portlet.getPortletConfig().getInitParameter(
-				STATE_SITE_MODE);
-		state.setAttribute(STATE_SITE_MODE, site_mode);
+		if (state.getAttribute(STATE_SITE_MODE) == null) {
+			// get site tool mode from tool registry
+			String site_mode = config.getInitParameter(STATE_SITE_MODE);
+
+			// When in helper mode we don't have 
+			if (site_mode == null) {
+				site_mode = SITE_MODE_HELPER;
+			}
+
+			state.setAttribute(STATE_SITE_MODE, site_mode);
+		}
+		
+		
 
 	} // initState
 
@@ -1142,6 +1179,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("siteTypes", state.getAttribute(STATE_SITE_TYPES));
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			context.put("type", siteType);
+			context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
 
 			if (siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
 				context.put("isCourseSite", Boolean.TRUE);
@@ -1208,7 +1246,17 @@ public class SiteAction extends PagedResourceActionII {
 				
 			}
 
+			if (state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE) != null) {
+				// In helper mode it's never editable
+				context.put("titleEditableSiteType", Boolean.FALSE);
+				siteInfo.title = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			} else {
+				context.put("titleEditableSiteType", state
+						.getAttribute(TITLE_EDITABLE_SITE_TYPE));
+			}
 			context.put(FORM_TITLE, siteInfo.title);
+			
+			
 			context.put(FORM_SHORT_DESCRIPTION, siteInfo.short_description);
 			context.put(FORM_DESCRIPTION, siteInfo.description);
 
@@ -1913,6 +1961,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("title", state.getAttribute(FORM_SITEINFO_TITLE));
 			context.put("siteTitleEditable", Boolean.valueOf(siteTitleEditable(state, site.getType())));
 			context.put("type", site.getType());
+			context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
 
 			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -3769,13 +3818,17 @@ public class SiteAction extends PagedResourceActionII {
 	 * 	doNew_site is called when the Site list tool bar New... button is clicked
 	 * 
 	 */
-	public void doNew_site(RunData data) throws Exception {
+	public void doNew_site(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
 		// start clean
 		cleanState(state);
 		
+		canChooseAdminSite(data, state);
+	}
+
+	private void canChooseAdminSite(RunData data, SessionState state) {
 		List<Entity> adminSites = DevolvedSakaiSecurity.getAvailableAdminRealms(null); 
 		if (adminSites.size() == 1 && !SiteService.allowAddSite(null)) {
 			String adminRealm = adminSites.get(0).getReference();
@@ -3792,7 +3845,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
-	public void doSite_selectAdmin(RunData data) throws Exception {
+	public void doSite_selectAdmin(RunData data) {
 			
 		SessionState state = ((JetspeedRunData) data)
 			.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
@@ -5084,6 +5137,10 @@ public class SiteAction extends PagedResourceActionII {
 			// clean state variables
 			cleanState(state);
 
+			if (SITE_MODE_HELPER.equals(state.getAttribute(STATE_SITE_MODE))) {
+				state.setAttribute(SiteHelper.SITE_CREATE_SITE_ID, site.getId());
+				state.setAttribute(STATE_SITE_MODE, SITE_MODE_HELPER_DONE);
+			}
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
 
 		}
@@ -5609,7 +5666,12 @@ public class SiteAction extends PagedResourceActionII {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		removeAddClassContext(state);
-		state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+		if (SITE_MODE_HELPER.equals(state.getAttribute(STATE_SITE_MODE))) {
+			state.setAttribute(STATE_SITE_MODE, SITE_MODE_HELPER_DONE);
+			state.setAttribute(SiteHelper.SITE_CREATE_CANCELLED, Boolean.TRUE);
+		} else {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+		}
 
 	} // doCancel_create
 
@@ -6389,11 +6451,12 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_PAGESIZE_SITEINFO, new Hashtable());
 		}
 
-		if (((String) state.getAttribute(STATE_SITE_MODE))
-				.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
+		if (SITE_MODE_SITESETUP.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
-		} else if (((String) state.getAttribute(STATE_SITE_MODE))
-				.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
+		} else if (SITE_MODE_HELPER.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "1");
+			canChooseAdminSite(data, state);
+		} else if (SITE_MODE_SITEINFO.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))){
 
 			String siteId = ToolManager.getCurrentPlacement().getContext();
 			getReviseSite(state, siteId);
@@ -6423,8 +6486,18 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				state.setAttribute(STATE_SITE_TYPES, types);
 			} else {
-				state.setAttribute(STATE_SITE_TYPES, new Vector());
+				t = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TYPES);
+				if (t != null) {
+					state.setAttribute(STATE_SITE_TYPES, new ArrayList(Arrays
+						.asList(t.split(","))));
+				} else {
+					state.setAttribute(STATE_SITE_TYPES, new Vector());
+				}
 			}
+		}
+		if (state.getAttribute(STATE_SITE_TITLE_MAX) == null) {
+			int siteTitleMaxLength = ServerConfigurationService.getInt("site.title.maxlength", 20);
+			state.setAttribute(STATE_SITE_TITLE_MAX, siteTitleMaxLength);
 		}
 	} // init
 
@@ -12671,6 +12744,50 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		}
 		return rv;
+	}
+	
+	protected void toolModeDispatch(String methodBase, String methodExt, HttpServletRequest req, HttpServletResponse res)
+	throws ToolException
+	{
+		ToolSession toolSession = SessionManager.getCurrentToolSession();
+		SessionState state = getState(req);
+
+		if (SITE_MODE_HELPER_DONE.equals(state.getAttribute(STATE_SITE_MODE)))
+		{
+			String url = (String) SessionManager.getCurrentToolSession().getAttribute(Tool.HELPER_DONE_URL);
+
+			SessionManager.getCurrentToolSession().removeAttribute(Tool.HELPER_DONE_URL);
+
+			// TODO: Implement cleanup.
+			cleanState(state);
+			// Helper cleanup.
+
+			cleanStateHelper(state);
+			
+			if (M_log.isDebugEnabled())
+			{
+				M_log.debug("Sending redirect to: "+ url);
+			}
+			try
+			{
+				res.sendRedirect(url);
+			}
+			catch (IOException e)
+			{
+				M_log.warn("Problem sending redirect to: "+ url,  e);
+			}
+			return;
+		}
+		else
+		{
+			super.toolModeDispatch(methodBase, methodExt, req, res);
+		}
+	}
+
+	private void cleanStateHelper(SessionState state) {
+		state.removeAttribute(STATE_SITE_MODE);
+		state.removeAttribute(STATE_TEMPLATE_INDEX);
+		state.removeAttribute(STATE_INITIALIZED);
 	}
 
 }
