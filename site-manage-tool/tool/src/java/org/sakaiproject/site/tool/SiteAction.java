@@ -1442,6 +1442,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("siteTypes", state.getAttribute(STATE_SITE_TYPES));
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			context.put("type", siteType);
+			context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
 			context.put("siteTitleEditable", Boolean.valueOf(siteTitleEditable(state, siteType)));
 
 			if (siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -1496,14 +1497,10 @@ public class SiteAction extends PagedResourceActionII {
 			if ((Boolean)state.getAttribute(STATE_ADMIN_REALM_FROM_USER)) {
 				context.put("back", "63");
 			}
-				
-			if (state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE) != null) {
-				context.put("titleEditableSiteType", Boolean.FALSE);
-				siteInfo.title = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
-			} else {
-				context.put("titleEditableSiteType", state
-						.getAttribute(TITLE_EDITABLE_SITE_TYPE));
-			}
+			
+			// Stash the site title.
+			siteInfo.title = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			
 			context.put(FORM_TITLE, siteInfo.title);
 			context.put(FORM_URL_BASE, aliasBaseUrl);
 			context.put(FORM_URL_ALIAS, siteInfo.url_alias);
@@ -3981,7 +3978,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
-	public void doSite_selectAdmin(RunData data) throws Exception {
+	public void doSite_selectAdmin(RunData data) {
 			
 		SessionState state = ((JetspeedRunData) data)
 			.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
@@ -6337,6 +6334,7 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	private boolean siteTitleEditable(SessionState state, String site_type) {
 		return site_type != null 
+				&& state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE) == null
 				&& (!site_type.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))
 					||	(state.getAttribute(TITLE_EDITABLE_SITE_TYPE) != null 
 							&& ((List) state.getAttribute(TITLE_EDITABLE_SITE_TYPE)).contains(site_type)));
@@ -6359,6 +6357,7 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
 		} else if (SITE_MODE_HELPER.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "1");
+			canChooseAdminSite(data, state);
 		} else if (SITE_MODE_SITEINFO.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))){
 
 			String siteId = ToolManager.getCurrentPlacement().getContext();
