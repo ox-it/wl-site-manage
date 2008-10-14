@@ -9662,8 +9662,7 @@ public class SiteAction extends PagedResourceActionII {
 			buf.append(userName + ":\n\n");
 			buf.append(rb.getString("java.following") + " "
 					+ productionSiteName + " "
-					+ rb.getString("java.simplesite") + "\n");
-			buf.append(siteTitle + "\n");
+					+ rb.getFormattedMessage("java.simplesite", new Object[]{siteTitle}) + "\n");
 			buf.append(rb.getString("java.simpleby") + " ");
 			buf.append(UserDirectoryService.getCurrentUser().getDisplayName()
 					+ ". \n\n");
@@ -9690,7 +9689,7 @@ public class SiteAction extends PagedResourceActionII {
 				buf.append(rb.getString("java.loginhow2") + "\n");
 				buf.append(rb.getString("java.loginhow3u") + "\n");
 			}
-			buf.append(rb.getString("java.tabscreen"));
+			buf.append(rb.getFormattedMessage("java.tabscreen", new Object[]{siteTitle}));
 			content = buf.toString();
 			EmailService.send(from, to, message_subject, content, headerTo,
 					replyTo, null);
