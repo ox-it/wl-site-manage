@@ -72,6 +72,14 @@
 			</tr>
 			<tr>
 				<th>
+					Admin Site
+				</th>
+				<td>
+					$validator.escapeHtml($!adminSite)
+				</td>
+			</tr>
+			<tr>
+				<th>
 					$tlang.getString("newsc.short")
 				</th>
 				<td>
