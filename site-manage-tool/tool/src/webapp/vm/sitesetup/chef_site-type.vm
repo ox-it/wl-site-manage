@@ -122,6 +122,7 @@
 		<input type="hidden" name="templateIndex" value="$!templateIndex" />
 		<div class ="act">
 			<input type="submit" accesskey="s"  class="active" name="eventSubmit_doSite_type" value="$tlang.getString("sitetype.con")" />
+			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
 			<input type="submit" accesskey="x" name="eventSubmit_doCancel_create" value="$tlang.getString("sitetype.can")" />
 		</div>
 	</form>				

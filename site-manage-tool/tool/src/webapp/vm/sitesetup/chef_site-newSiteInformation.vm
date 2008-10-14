@@ -231,7 +231,7 @@
 						class="active" 
 						accesskey="s" 
 						onclick="document.siteInfoForm.option.value='continue'; document.siteInfoForm.submit(); return false;" />
-				#if ($!siteTypes.size() > 1)
+				#if ($back)
 					<input type="button" name="Back" 
 							value="$tlang.getString('gen.back')"
 							accesskey="b"
