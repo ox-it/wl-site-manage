@@ -467,7 +467,6 @@ public class SiteBrowserAction extends PagedResourceActionII
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		String id = data.getParameters().getString("id");
-		String position = data.getParameters().getString("pos");
 
 		// get the site
 		try
@@ -475,9 +474,6 @@ public class SiteBrowserAction extends PagedResourceActionII
 			Site site = SiteService.getSite(id);
 			state.setAttribute("siteId", id);
 			state.setAttribute("mode", "visit");
-
-			int pos = (new Integer(position)).intValue() - 1;
-			state.setAttribute(STATE_VIEW_ID, new Integer(pos));
 
 			// disable auto-updates while in view mode
 			// ((EventObservingCourier) state.getAttribute(STATE_OBSERVER)).disable();
