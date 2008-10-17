@@ -10,14 +10,14 @@
        <form name="classInformationForm" method="post" action="#toolForm("SiteAction")">
                <input type="hidden" name="back" value="12" />
                <input type="hidden" name="template-index" value="54" />
-               <label for="adminSiteRealm">New Administration Site</label>
+               <label for="adminSiteRealm">$tlang.getString("sitediadm.new_admin")</label>
                #if ($hasAvailableSites)  
                <select name="adminSiteRealm" id="adminSiteRealm">
                #foreach ($adminSite in $adminSites)
                        <option value="${adminSite.reference}" #if($adminSite.reference == $adminSiteRef)selected="true"#end>$adminSite.name</option> 
                #end
                #else
-               No available administration sites
+               $tlang.getString("sitediadm.none_found")
                #end
                </select>
        <div class="act">

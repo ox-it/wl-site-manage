@@ -2,19 +2,17 @@
 
 <div class ="portletBody">
 
-	<h3>
-		Select Administration Site
-	</h3>
+	<h3>$tlang.getString("siteseladm.select")</h3>
 	#if ($alertMessage)<div class="alertMessage">$tlang.getString("sitetype.alert") $validator.escapeHtml($alertMessage)</div>	#end
 	<p class="step">
-		Here is some help
+		$tlang.getString("siteseladm.intro")
 	</p>
 	<form name="adminForm" id="adminForm" action="#toolForm("$action")" method="post">
 		#if ($allowUnmanaged)
 				<p class="checkbox indnt1">
 					<input type="radio" name="adminSite" id="unmanaged" value="unmanaged" #if ("unmanaged" == $adminSite) checked="checked" #end/>
 						<label for="unmanaged">
-							Unmanaged Site
+							$tlang.getString("siteseladm.unmanaged")
 						</label>	
 				</p>
 		#end
