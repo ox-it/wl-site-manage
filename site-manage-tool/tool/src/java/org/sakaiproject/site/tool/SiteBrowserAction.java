@@ -360,13 +360,14 @@ public class SiteBrowserAction extends PagedResourceActionII implements SiteHelp
 		context.put("siteTypes", newTypes);
 
 		//List terms = CourseManagementService.getTerms();
-		List terms = cms.getAcademicSessions();
-
-		String termSearchSiteType = (String) state.getAttribute(SEARCH_TERM_SITE_TYPE);
-		if (termSearchSiteType != null)
-		{
-			context.put("termSearchSiteType", termSearchSiteType);
-			context.put("terms", terms);
+		if (cms != null) {
+			List terms = cms.getAcademicSessions();
+			String termSearchSiteType = (String) state.getAttribute(SEARCH_TERM_SITE_TYPE);
+			if (termSearchSiteType != null)
+			{
+				context.put("termSearchSiteType", termSearchSiteType);
+				context.put("terms", terms);
+			}
 		}
 
 		return "_simpleSearch";
