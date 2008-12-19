@@ -8,6 +8,7 @@
 		$tlang.getString("siteseladm.intro")
 	</p>
 	<form name="adminForm" id="adminForm" action="#toolForm("$action")" method="post">
+	#if ($canSelect)
 		#if ($allowUnmanaged)
 				<p class="checkbox indnt1">
 					<input type="radio" name="adminSite" id="unmanaged" value="unmanaged" #if ("unmanaged" == $adminSite) checked="checked" #end/>
@@ -30,6 +31,14 @@
 			<input type="submit" accesskey="s"  class="active" name="eventSubmit_doSite_selectAdmin" value="$tlang.getString("sitetype.con")" />
 			<input type="submit" accesskey="x" name="eventSubmit_doCancel_create" value="$tlang.getString("sitetype.can")" />
 		</div>
+	#else
+		<p>$tlang.getString("siteseladm.none")</p>
+		<input type="hidden" name="back" value="0" />
+		<input type="hidden" name="template-index" value="55" />
+		<div class ="act">
+			<input type="submit" accesskey="x" name="eventSubmit_doCancel_create" value="$tlang.getString("sitetype.can")" />
+		</div>
+	#end
 	</form>				
 </div>	
 
