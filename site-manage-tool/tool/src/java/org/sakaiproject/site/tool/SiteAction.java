@@ -3052,6 +3052,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("adminSites", possibleAdminSites);
 			context.put("adminSite", state.getAttribute(STATE_ADMIN_REALM));
 			context.put("allowUnmanaged", unmanaged);
+			context.put("canSelect", unmanaged || possibleAdminSites.size() > 0);
 			
 			return (String)getContext(data).get("template") + TEMPLATE[55];
 		}
