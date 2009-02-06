@@ -1837,6 +1837,11 @@ public class SiteAction extends PagedResourceActionII {
 						b.add(new MenuEntry(rb.getString("java.orderpages"),
 								"doPageOrderHelper"));
 					}
+					
+					// TODO Do i18n
+					b.add(new MenuEntry("External Groups",
+								"doExternalGroupsHelper"));
+					
 				}
 				
 				if (b.size() > 0)
@@ -3079,6 +3084,19 @@ public class SiteAction extends PagedResourceActionII {
 
 		// launch the helper
 		startHelper(data.getRequest(), "sakai-site-pageorder-helper");
+	}
+	
+	public void doExternalGroupsHelper(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// pass in the siteId of the site to be ordered (so it can configure
+		// sites other then the current site)
+		SessionManager.getCurrentToolSession().setAttribute(
+				HELPER_ID + ".siteId", ((Site) getStateSite(state)).getId());
+
+		// launch the helper
+		startHelper(data.getRequest(), "external.groups");
 	}
 
 	// htripath: import materials from classic
