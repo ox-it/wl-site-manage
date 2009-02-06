@@ -8154,6 +8154,7 @@ public class SiteAction extends PagedResourceActionII {
 				String providerCourseEid = (String) i.next();
 				try
 				{
+					if (cms != null) {
 					Section section = cms.getSection(providerCourseEid);
 					if (section != null)
 					{
@@ -8195,6 +8196,52 @@ public class SiteAction extends PagedResourceActionII {
 							}
 						}
 					}
+					}
+					else
+					{
+						Map userRoles = groupProvider.getUserRolesForGroup(providerCourseEid);
+							for (Iterator mIterator = userRoles.keySet().iterator();mIterator.hasNext();)
+								{
+									String userEid = (String)mIterator.next();
+									try 
+									{
+										User user = UserDirectoryService.getUserByEid(userEid);
+										String userId = user.getId();
+										Member member = realm.getMember(userId);
+										if (member != null && member.isProvided())
+										{
+											// get or add provided participant
+											Participant participant;
+											if (participantsMap.containsKey(userId))
+											{
+												participant = (Participant) participantsMap.get(userId);
+												if (!participant.section.contains(providerCourseEid))
+												{
+													participant.section = participant.section.concat(", <br />" + providerCourseEid);
+												}
+											}
+											else
+											{
+												participant = new Participant();
+												participant.credits = "";
+												participant.name = user.getSortName();
+												participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+												participant.regId = "";
+												participant.removeable = false;
+												participant.role = member.getRole()!=null?member.getRole().getId():"";
+												participant.section = providerCourseEid;
+												participant.uniqname = userId;
+											}
+											
+											participantsMap.put(userId, participant);
+										}
+									} catch (UserNotDefinedException exception) {
+										// deal with missing user quietly without throwing a
+										// warning message
+										M_log.warn(exception.getMessage());
+									}
+								}
+						}
 					
 				}
 				catch (IdNotFoundException e)
