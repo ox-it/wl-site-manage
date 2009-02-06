@@ -9537,7 +9537,17 @@ public class SiteAction extends PagedResourceActionII {
 						}
 						// We didn't find anyone via email address, so try getting the user by EID
 						if(u == null) {
-							u = UserDirectoryService.getUserByEid(officialAccount);
+							try {
+								u = UserDirectoryService.getUserByEid(officialAccount);
+							} catch (UserNotDefinedException unde) {
+								if (M_log.isDebugEnabled()) {
+									M_log.debug("Didn't find user with EID: "+ officialAccount);
+								}
+							}
+						}
+						// And finally try the authentication ID.
+						if(u == null) {
+							u = UserDirectoryService.getUserByAid(officialAccount);
 						}
 						
 						if (site != null && site.getUserRole(u.getId()) != null) {
