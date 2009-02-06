@@ -684,6 +684,13 @@ public class SiteAddParticipantHandler {
 							if(usersWithEmail.size() == 0) {
 								// If the collection is empty, we didn't find any users with this email address
 								M_log.info("Unable to find users with email " + officialAccount);
+								try {
+									u = UserDirectoryService.getUserByAid(officialAccount);
+								} catch (UserNotDefinedException unde) {
+									if (M_log.isDebugEnabled()) {
+										M_log.debug("Didn't find user with AID: "+ officialAccount);
+									}
+								}
 							} else if (usersWithEmail.size() == 1) {
 								// We found one user with this email address.  Use it.
 								u = (User)usersWithEmail.iterator().next();
@@ -695,6 +702,8 @@ public class SiteAddParticipantHandler {
 							}
 						}
 					}
+					
+					
 						
 					if (u != null)
 					{
