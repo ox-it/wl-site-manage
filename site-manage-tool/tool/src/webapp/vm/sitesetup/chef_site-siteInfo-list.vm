@@ -180,8 +180,27 @@
 				</td>
 			</tr>
 		#end
-	</table>	
-	#if ($!allowUpdate || $allowUpdateSiteMembership || $!viewRoster)
+	</table>
+	#if ($allowUpdate && $providedGroups)
+		<h4>
+			External Groups
+		</h4>
+		<table>
+		#foreach ($group in $providedGroups)
+			<tr>
+				<td>$group.name</td>
+				<td>$group.id</td>
+				<td>
+					<form name="removeGroupForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
+						<input type="hidden" name="groupId" value="$group.id"/>
+						<input type="submit" name="eventSubmit_doRemoveGroup" value="Remove"/>
+					</form>
+				</td>
+			</tr>
+		#end
+		</table>
+	#end
+	#if ($allowUpdate || $allowUpdateSiteMembership || $viewRoster)
 		 <h4>		
 			$validator.escapeHtml($!siteTitle) $tlang.getString("sitegen.siteinfolist.part") (# $!participantListSize)
 		</h4>
