@@ -186,16 +186,21 @@
 			External Groups
 		</h4>
 		<table>
-		#foreach ($group in $providedGroups)
+		#if ($providedGroups.size() > 0)
+			#foreach ($group in $providedGroups)
 			<tr>
 				<td>$group.name</td>
-				<td>$group.id</td>
 				<td>
 					<form name="removeGroupForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
 						<input type="hidden" name="groupId" value="$group.id"/>
 						<input type="submit" name="eventSubmit_doRemoveGroup" value="Remove"/>
 					</form>
 				</td>
+			</tr>
+			#end
+		#else
+			<tr>
+				<td>No groups found</td>
 			</tr>
 		#end
 		</table>
