@@ -58,6 +58,7 @@ import org.sakaiproject.archive.api.ImportMetadata;
 import org.sakaiproject.archive.cover.ArchiveService;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.AuthzPermissionException;
+import org.sakaiproject.authz.api.DisplayGroupProvider;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.PermissionsHelper;
@@ -1840,6 +1841,11 @@ public class SiteAction extends PagedResourceActionII {
 						b.add(new MenuEntry(rb.getString("java.orderpages"),
 								"doPageOrderHelper"));
 					}
+					
+					// TODO Do i18n
+					b.add(new MenuEntry("External Groups",
+								"doExternalGroupsHelper"));
+					
 				}
 				
 				if (b.size() > 0)
@@ -1924,6 +1930,8 @@ public class SiteAction extends PagedResourceActionII {
 							.getProperty(PROP_SITE_TERM));
 				} else {
 					context.put("isCourseSite", Boolean.FALSE);
+					// Show groups in there.
+					prepareGroupsIntoContext(state, context, site);
 				}
 			} catch (Exception e) {
 				M_log.warn(this + " site info list: " + e.toString());
@@ -3100,6 +3108,67 @@ public class SiteAction extends PagedResourceActionII {
 		return (String)getContext(data).get("template") + TEMPLATE[56];
 	}
 	/**
+	 *  Adds details of the groups used for the members of the site.
+	 * @param state
+	 * @param context
+	 * @param site
+	 */
+	private void prepareGroupsIntoContext(SessionState state, Context context,
+			Site site) {
+
+		List providerIds = getProviderCourseList(site.getProviderGroupId());
+		if ( groupProvider instanceof DisplayGroupProvider ) {
+			DisplayGroupProvider displayGroupProvider = (DisplayGroupProvider)groupProvider;
+			List<Map> groups = new ArrayList<Map>(providerIds.size());
+			for (String providerId: (List<String>)providerIds) {
+				String displayName = displayGroupProvider.getGroupName(providerId);
+				if (displayName == null) {
+					M_log.debug("Ignoring unnamed providerId: "+ providerId);
+				} else {
+					Map<String, String> group = new HashMap<String, String>();
+					group.put("id", providerId);
+					group.put("name", displayName);
+					groups.add(group);
+				}
+			}
+			context.put("providedGroups", groups);
+		}
+	}
+	
+	public void doRemoveGroup(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+			.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		String removeGroupId = data.getParameters().getString("groupId");
+		
+		String siteId = (String) state
+				.getAttribute(STATE_SITE_INSTANCE_ID);
+		String realmId = SiteService.siteReference(siteId);
+		try {
+			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
+
+			List<String> providerCourseList = (List<String>)getProviderCourseList(StringUtil
+					.trimToNull(realm.getProviderGroupId()));
+			if (providerCourseList.remove(removeGroupId)) {
+				String displayName = removeGroupId;
+				if (groupProvider instanceof DisplayGroupProvider) {
+					String betterName = ((DisplayGroupProvider)groupProvider).getGroupName(removeGroupId);
+					if (betterName != null && betterName.length() > 0) {
+						displayName = betterName;
+					}
+				}
+				realm.setProviderGroupId(groupProvider.packId(providerCourseList.toArray(new String[]{})));
+				AuthzGroupService.save(realm);
+				addAlert(state, "Removed group: "+ displayName);
+			}
+		} catch (GroupNotDefinedException gnde) {
+			M_log.warn("Failed to find realm for site: "+ siteId);
+			addAlert(state, "Failed to find authz stuff.");
+		} catch (AuthzPermissionException ape) {
+			addAlert(state, "You don't have permission to update the site members.");
+		}
+	}
+
+	/**
 	 * Launch the Page Order Helper Tool -- for ordering, adding and customizing
 	 * pages
 	 * 
@@ -3117,6 +3186,19 @@ public class SiteAction extends PagedResourceActionII {
 
 		// launch the helper
 		startHelper(data.getRequest(), "sakai-site-pageorder-helper");
+	}
+	
+	public void doExternalGroupsHelper(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// pass in the siteId of the site to be ordered (so it can configure
+		// sites other then the current site)
+		SessionManager.getCurrentToolSession().setAttribute(
+				HELPER_ID + ".siteId", ((Site) getStateSite(state)).getId());
+
+		// launch the helper
+		startHelper(data.getRequest(), "external.groups");
 	}
 
 	// htripath: import materials from classic
@@ -8192,6 +8274,7 @@ public class SiteAction extends PagedResourceActionII {
 				String providerCourseEid = (String) i.next();
 				try
 				{
+					if (cms != null) {
 					Section section = cms.getSection(providerCourseEid);
 					if (section != null)
 					{
@@ -8233,6 +8316,52 @@ public class SiteAction extends PagedResourceActionII {
 							}
 						}
 					}
+					}
+					else
+					{
+						Map userRoles = groupProvider.getUserRolesForGroup(providerCourseEid);
+							for (Iterator mIterator = userRoles.keySet().iterator();mIterator.hasNext();)
+								{
+									String userEid = (String)mIterator.next();
+									try 
+									{
+										User user = UserDirectoryService.getUserByEid(userEid);
+										String userId = user.getId();
+										Member member = realm.getMember(userId);
+										if (member != null && member.isProvided())
+										{
+											// get or add provided participant
+											Participant participant;
+											if (participantsMap.containsKey(userId))
+											{
+												participant = (Participant) participantsMap.get(userId);
+												if (!participant.section.contains(providerCourseEid))
+												{
+													participant.section = participant.section.concat(", <br />" + providerCourseEid);
+												}
+											}
+											else
+											{
+												participant = new Participant();
+												participant.credits = "";
+												participant.name = user.getSortName();
+												participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+												participant.regId = "";
+												participant.removeable = false;
+												participant.role = member.getRole()!=null?member.getRole().getId():"";
+												participant.section = providerCourseEid;
+												participant.uniqname = userId;
+											}
+											
+											participantsMap.put(userId, participant);
+										}
+									} catch (UserNotDefinedException exception) {
+										// deal with missing user quietly without throwing a
+										// warning message
+										M_log.warn(exception.getMessage());
+									}
+								}
+						}
 					
 				}
 				catch (IdNotFoundException e)
@@ -9510,7 +9639,17 @@ public class SiteAction extends PagedResourceActionII {
 						}
 						// We didn't find anyone via email address, so try getting the user by EID
 						if(u == null) {
-							u = UserDirectoryService.getUserByEid(officialAccount);
+							try {
+								u = UserDirectoryService.getUserByEid(officialAccount);
+							} catch (UserNotDefinedException unde) {
+								if (M_log.isDebugEnabled()) {
+									M_log.debug("Didn't find user with EID: "+ officialAccount);
+								}
+							}
+						}
+						// And finally try the authentication ID.
+						if(u == null) {
+							u = UserDirectoryService.getUserByAid(officialAccount);
 						}
 						
 						if (site != null && site.getUserRole(u.getId()) != null) {
