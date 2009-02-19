@@ -242,7 +242,8 @@ public class SiteAction extends PagedResourceActionII {
 			"",
 			"-findCourse", // 53
 			"-siteInfo-changeAdmin", // 54
-			"-selectAdmin" // 55
+			"-selectAdmin", // 55
+			"-exportMemberList" // 56
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -306,6 +307,8 @@ public class SiteAction extends PagedResourceActionII {
 	private static final String SORTED_BY_PARTICIPANT_ROLE = "participant_role";
 
 	private static final String SORTED_BY_PARTICIPANT_ID = "participant_id";
+	
+	private static final String SORTED_BY_DISPLAY_ID = "display_id";
 
 	private static final String SORTED_BY_PARTICIPANT_COURSE = "participant_course";
 
@@ -3061,6 +3064,41 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // buildContextForTemplate
 
+	
+	public String buildUserListPanelContext(VelocityPortlet portlet,
+			Context context, RunData data, SessionState state)
+	{   /*
+		 * build context for chef_site-exportMemberList.vm
+		 * Displays list of usernames. 
+		 */		
+		
+		Site site = getStateSite(state);
+		String siteId = site.getId();
+		String sortedAsc = "";
+		boolean allowUpdateSite = SiteService.allowUpdateSite(siteId);
+		
+		context.put("tlang", rb);
+		context.put("allowUpdate", Boolean.valueOf(allowUpdateSite));
+		context.put("siteTitle", site.getTitle());
+		
+		if (allowUpdateSite ) {
+			state.setAttribute(SORTED_BY, SORTED_BY_DISPLAY_ID);
+			Collection participantsCollection = getParticipantList(state);
+			sortedAsc = (String) state.getAttribute(SORTED_ASC);
+			if (sortedAsc == null) {
+				sortedAsc = Boolean.TRUE.toString();
+				state.setAttribute(SORTED_ASC, sortedAsc);
+			}
+			context.put("currentSortedBy", SORTED_BY_DISPLAY_ID);
+			if (sortedAsc != null)
+				context.put("currentSortAsc", sortedAsc);
+			context.put("participantListSize", participantsCollection.size());
+			context.put("participantList", prepPage(state));
+			pagingInfoToContext(state, context);
+		}
+		
+		return (String)getContext(data).get("template") + TEMPLATE[56];
+	}
 	/**
 	 * Launch the Page Order Helper Tool -- for ordering, adding and customizing
 	 * pages
@@ -11021,6 +11059,18 @@ public class SiteAction extends PagedResourceActionII {
 				String s2 = null;
 				if (o2.getClass().equals(Participant.class)) {
 					s2 = ((Participant) o2).getRegId();
+				}
+
+				result = compareString(s1, s2);
+			} else if (m_criterion.equals(SORTED_BY_DISPLAY_ID)) {
+				String s1 = null;
+				if (o1.getClass().equals(Participant.class)) {
+					s1 = ((Participant) o1).getDisplayId();
+				}
+
+				String s2 = null;
+				if (o2.getClass().equals(Participant.class)) {
+					s2 = ((Participant) o2).getDisplayId();
 				}
 
 				result = compareString(s1, s2);
