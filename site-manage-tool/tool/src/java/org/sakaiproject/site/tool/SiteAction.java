@@ -9658,7 +9658,7 @@ public class SiteAction extends PagedResourceActionII {
 							existingUsers.add(officialAccount);
 						} else {
 							participant.name = u.getDisplayName();
-							participant.uniqname = u.getEid();
+							participant.uniqname = u.getId();
 							pList.add(participant);
 						}
 					} catch (UserNotDefinedException e) {
@@ -9716,14 +9716,14 @@ public class SiteAction extends PagedResourceActionII {
 								existingUsers.add(nonOfficialAccount);
 							} else {
 								participant.name = u.getDisplayName();
-								participant.uniqname = nonOfficialAccount;
+								participant.uniqname = u.getId();
 								pList.add(participant);
 							}
 						} catch (UserNotDefinedException e) {
 							// if the nonOfficialAccount user is not in the system
 							// yet
-							participant.name = nonOfficialAccount;
-							participant.uniqname = nonOfficialAccount; // TODO:
+							participant.name = nonOfficialAccount; // TODO:
+							participant.eid = nonOfficialAccount;
 							// what
 							// would
 							// the
@@ -11028,7 +11028,7 @@ public class SiteAction extends PagedResourceActionII {
 				Object o = (Object) participantList.get(i);
 				if (o.getClass().equals(Participant.class)) {
 					// get participant roles
-					id = ((Participant) o).getUniqname();
+					id = ((Participant) o).getEid();
 					selectedParticipantRoles.put(id, ((Participant) o)
 							.getRole());
 				}
@@ -11438,6 +11438,9 @@ public class SiteAction extends PagedResourceActionII {
 		// Note: uniqname is really a user ID
 		public String uniqname = NULL_STRING;
 
+		// Only used when adding users who don't yet have an internal ID
+		public String eid = NULL_STRING;
+
 		public String role = NULL_STRING;
 
 		/** role from provider */
@@ -11460,7 +11463,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		public String getUniqname() {
-			return uniqname;
+			return (NULL_STRING.equals(eid))?uniqname:eid;
 		}
 
 		public String getRole() {
@@ -11494,6 +11497,9 @@ public class SiteAction extends PagedResourceActionII {
 		 * @return The user eid.
 		 */
 		public String getEid() {
+			if (!NULL_STRING.equals(eid)) {
+				return eid;
+			}
 			try {
 				return UserDirectoryService.getUserEid(uniqname);
 			} catch (UserNotDefinedException e) {
@@ -11508,6 +11514,9 @@ public class SiteAction extends PagedResourceActionII {
 		 * @return The user display id.
 		 */
 		public String getDisplayId() {
+			if (!NULL_STRING.equals(eid)) {
+				return eid;
+			}
 			try {
 				User user = UserDirectoryService.getUser(uniqname);
 				return user.getDisplayId();
