@@ -683,7 +683,7 @@ public class SiteAddParticipantHandler {
 						if(usersWithEmail != null) {
 							if(usersWithEmail.size() == 0) {
 								// If the collection is empty, we didn't find any users with this email address
-								M_log.info("Unable to find users with email " + officialAccount);
+								M_log.debug("Unable to find users with email " + officialAccount);
 								try {
 									u = UserDirectoryService.getUserByAid(officialAccount);
 								} catch (UserNotDefinedException unde) {
@@ -697,7 +697,7 @@ public class SiteAddParticipantHandler {
 							} else if (usersWithEmail.size() > 1) {
 								// If we have multiple users with this email address, pick one and log this error condition
 								// TODO Should we not pick a user?  Throw an exception?
-								M_log.warn("Found multiple user with email " + officialAccount);
+								M_log.debug("Found multiple user with email " + officialAccount);
 								u = (User)usersWithEmail.iterator().next();
 							}
 						}
