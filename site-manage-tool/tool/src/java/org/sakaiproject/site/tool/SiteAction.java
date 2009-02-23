@@ -8267,12 +8267,20 @@ public class SiteAction extends PagedResourceActionII {
 			for (Iterator<String> i=providerCourseList.iterator(); i.hasNext();)
 			{
 				String providerCourseEid = (String) i.next();
-				try
+				Section section = null;
+				if (cms != null) {
+					try {
+						section = cms.getSection(providerCourseEid);
+					} catch (IdNotFoundException infe) {
+						if (M_log.isDebugEnabled()) {
+							M_log.debug("Not a provided through course management: "+ providerCourseEid);
+						}
+					}
+				}
+				if (section != null)
 				{
-					if (cms != null) {
-					Section section = cms.getSection(providerCourseEid);
-					if (section != null)
-					{
+					try {
+
 						// in case of Section eid
 						EnrollmentSet enrollmentSet = section.getEnrollmentSet();
 						addParticipantsFromEnrollmentSet(participantsMap, realm, enrollmentSet, section.getTitle());
@@ -8282,18 +8290,18 @@ public class SiteAction extends PagedResourceActionII {
 						{
 							addParticipantsFromMemberships(participantsMap, realm, memberships, section.getTitle());
 						}
-						
+
 						// now look or the not-included member from CourseOffering object
 						CourseOffering co = cms.getCourseOffering(section.getCourseOfferingEid());
 						if (co != null)
 						{
-							
+
 							Set<Membership> coMemberships = cms.getCourseOfferingMemberships(section.getCourseOfferingEid());
 							if (coMemberships != null && coMemberships.size() > 0)
 							{
 								addParticipantsFromMemberships(participantsMap, realm, coMemberships, co.getTitle());
 							}
-							
+
 							// now look or the not-included member from CourseSet object
 							Set<String> cSetEids = co.getCourseSetEids();
 							for(Iterator<String> cSetEidsIterator = cSetEids.iterator(); cSetEidsIterator.hasNext();)
@@ -8310,59 +8318,59 @@ public class SiteAction extends PagedResourceActionII {
 								}
 							}
 						}
+
 					}
-					}
-					else
+					catch (IdNotFoundException e)
 					{
-						Map userRoles = groupProvider.getUserRolesForGroup(providerCourseEid);
-							for (Iterator mIterator = userRoles.keySet().iterator();mIterator.hasNext();)
+						M_log.warn("SiteParticipantHelper.prepareParticipants: "+ e.getMessage() + " sectionId=" + providerCourseEid, e);
+					}
+				}
+				else
+				{
+					Map userRoles = groupProvider.getUserRolesForGroup(providerCourseEid);
+					for (Iterator mIterator = userRoles.keySet().iterator();mIterator.hasNext();)
+					{
+						String userEid = (String)mIterator.next();
+						try 
+						{
+							User user = UserDirectoryService.getUserByEid(userEid);
+							String userId = user.getId();
+							Member member = realm.getMember(userId);
+							if (member != null && member.isProvided())
+							{
+								// get or add provided participant
+								Participant participant;
+								if (participantsMap.containsKey(userId))
 								{
-									String userEid = (String)mIterator.next();
-									try 
+									participant = (Participant) participantsMap.get(userId);
+									if (!participant.section.contains(providerCourseEid))
 									{
-										User user = UserDirectoryService.getUserByEid(userEid);
-										String userId = user.getId();
-										Member member = realm.getMember(userId);
-										if (member != null && member.isProvided())
-										{
-											// get or add provided participant
-											Participant participant;
-											if (participantsMap.containsKey(userId))
-											{
-												participant = (Participant) participantsMap.get(userId);
-												if (!participant.section.contains(providerCourseEid))
-												{
-													participant.section = participant.section.concat(", <br />" + providerCourseEid);
-												}
-											}
-											else
-											{
-												participant = new Participant();
-												participant.credits = "";
-												participant.name = user.getSortName();
-												participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
-												participant.regId = "";
-												participant.removeable = false;
-												participant.role = member.getRole()!=null?member.getRole().getId():"";
-												participant.section = providerCourseEid;
-												participant.uniqname = userId;
-											}
-											
-											participantsMap.put(userId, participant);
-										}
-									} catch (UserNotDefinedException exception) {
-										// deal with missing user quietly without throwing a
-										// warning message
-										M_log.warn(exception.getMessage());
+										participant.section = participant.section.concat(", <br />" + providerCourseEid);
 									}
 								}
+								else
+								{
+									participant = new Participant();
+									participant.credits = "";
+									participant.name = user.getSortName();
+									participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+									participant.regId = "";
+									participant.removeable = false;
+									participant.role = member.getRole()!=null?member.getRole().getId():"";
+									participant.section = providerCourseEid;
+									participant.uniqname = userId;
+								}
+
+								participantsMap.put(userId, participant);
+							}
+						} catch (UserNotDefinedException exception) {
+							// deal with missing user quietly without throwing a
+							// warning message
+							M_log.warn(exception.getMessage());
 						}
-					
+					}
 				}
-				catch (IdNotFoundException e)
-				{
-					M_log.warn("SiteParticipantHelper.prepareParticipants: "+ e.getMessage() + " sectionId=" + providerCourseEid, e);
-				}
+
 			}
 			
 			// now for those not provided users
