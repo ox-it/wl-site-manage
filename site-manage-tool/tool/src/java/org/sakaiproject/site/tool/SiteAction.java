@@ -1841,11 +1841,6 @@ public class SiteAction extends PagedResourceActionII {
 						b.add(new MenuEntry(rb.getString("java.orderpages"),
 								"doPageOrderHelper"));
 					}
-					
-					// TODO Do i18n
-					b.add(new MenuEntry("External Groups",
-								"doExternalGroupsHelper"));
-					
 				}
 				
 				if (b.size() > 0)
@@ -3158,13 +3153,13 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				realm.setProviderGroupId(groupProvider.packId(providerCourseList.toArray(new String[]{})));
 				AuthzGroupService.save(realm);
-				addAlert(state, "Removed group: "+ displayName);
+				addAlert(state, rb.getFormattedMessage("java.extgrpremove", new Object[]{displayName}));
 			}
 		} catch (GroupNotDefinedException gnde) {
 			M_log.warn("Failed to find realm for site: "+ siteId);
-			addAlert(state, "Failed to find authz stuff.");
+			addAlert(state, rb.getString("java.extgrpauthz"));
 		} catch (AuthzPermissionException ape) {
-			addAlert(state, "You don't have permission to update the site members.");
+			addAlert(state,rb.getString("java.extgrpnoperm") );
 		}
 	}
 
