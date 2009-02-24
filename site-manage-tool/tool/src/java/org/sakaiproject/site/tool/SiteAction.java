@@ -624,6 +624,29 @@ public class SiteAction extends PagedResourceActionII {
 	// the string for course site type
 	private static final String STATE_COURSE_SITE_TYPE = "state_course_site_type";
 	
+	private static final Comparator<Entity> devolvedAdminComparator = new Comparator<Entity>() {
+
+		public int compare(Entity o1, Entity o2) {
+			if (o1 instanceof Site) {
+				if (o2 instanceof Site) {
+					Site s1 = (Site) o1;
+					Site s2 = (Site) o2;
+					return s1.getTitle().compareTo(s2.getTitle());
+				} else {
+					return -1;
+				}
+			} else {
+				if (o2 instanceof Site) {
+					return 1;
+				} else {
+					return o1.getId().compareTo(o2.getId());
+				}
+				
+			}
+		}
+		
+	};
+	
 	/**
 	 * Populate the state object, if needed.
 	 */
