@@ -3083,21 +3083,19 @@ public class SiteAction extends PagedResourceActionII {
 		context.put("tlang", rb);
 		context.put("allowUpdate", Boolean.valueOf(allowUpdateSite));
 		context.put("siteTitle", site.getTitle());
-		
+		context.put("currentSortedBy", state.getAttribute(SORTED_BY));
+
 		if (allowUpdateSite ) {
-			state.setAttribute(SORTED_BY, SORTED_BY_DISPLAY_ID);
 			Collection participantsCollection = getParticipantList(state);
 			sortedAsc = (String) state.getAttribute(SORTED_ASC);
 			if (sortedAsc == null) {
 				sortedAsc = Boolean.TRUE.toString();
 				state.setAttribute(SORTED_ASC, sortedAsc);
 			}
-			context.put("currentSortedBy", SORTED_BY_DISPLAY_ID);
 			if (sortedAsc != null)
 				context.put("currentSortAsc", sortedAsc);
 			context.put("participantListSize", participantsCollection.size());
 			context.put("participantList", prepPage(state));
-			pagingInfoToContext(state, context);
 		}
 		
 		return (String)getContext(data).get("template") + TEMPLATE[56];

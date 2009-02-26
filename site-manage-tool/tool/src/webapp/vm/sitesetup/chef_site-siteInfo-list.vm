@@ -444,7 +444,7 @@
 			</table>
 			<div class="act">
 				<input type="submit" accesskey="s" class="active" name="eventSubmit_doUpdate_participant" value="$tlang.getString("sitegen.siteinfolist.update")" />
-		        <input type="button" onClick="javascript:window.open('?panel=UserList','','left=20,top=20,width=400,height=500,toolbar=0,scrollbars=1'); return false;" class="active" name="eventSubmit_doUserList" value="Export User List"  />
+		        <input type="button" onClick="javascript:window.open('?panel=UserList','','left=20,top=20,width=400,height=700,toolbar=0,scrollbars=1'); return false;" name="eventSubmit_doUserList" value="Export User List"  />
 			</div>
 		</form>
 		
