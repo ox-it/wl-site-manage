@@ -3057,7 +3057,9 @@ public class SiteAction extends PagedResourceActionII {
 			if (canRemoveAdmin) {
 				adminSites.add(new AdminRealm("unmanged", getAdminReferenceName(null)));
 			}
-			for (Entity adminRealm :DevolvedSakaiSecurity.getAvailableAdminRealms(site.getReference())) {
+			List<Entity> adminRealms = DevolvedSakaiSecurity.getAvailableAdminRealms(site.getReference());
+			Collections.sort(adminRealms, devolvedAdminComparator);
+			for (Entity adminRealm : adminRealms) {
 				adminSites.add(new AdminRealm(adminRealm.getReference(), getAdminReferenceName(adminRealm.getReference())));
 			}
 			
@@ -3077,7 +3079,9 @@ public class SiteAction extends PagedResourceActionII {
 			Boolean unmanaged = SiteService.allowAddSite(null);
 			Boolean managed = SiteService.allowAddManagedSite();
 			
-			List possibleAdminSites = DevolvedSakaiSecurity.getAvailableAdminRealms(null);
+			List<Entity> possibleAdminSites = DevolvedSakaiSecurity.getAvailableAdminRealms(null);
+			Collections.sort(possibleAdminSites, devolvedAdminComparator);
+			
 			context.put("adminSites", possibleAdminSites);
 			context.put("adminSite", state.getAttribute(STATE_ADMIN_REALM));
 			context.put("allowUnmanaged", unmanaged);
