@@ -24,11 +24,11 @@
 	<p/>
 	<form action="#toolForm("SiteAction")" method="post">
 		<p class="instruction">
-			<h4>$!officialAccountSectionTitle</h4>
+			<h4>$tlang.getString("add.official.title")</h4>
 		</p>
 		<div class="indnt1">
 			<label for="officialAccount" class="block">
-				$!officialAccountLabel
+				$tlang.getString("add.official.label")
 			</label>
 			<textarea id="officialAccount" name="officialAccount"  cols="35" rows="4" wrap="virtual">$!validator.escapeHtmlTextarea($!officialAccountValue)</textarea>
 			<br /><span class="instruction">
@@ -36,11 +36,11 @@
 			</span>
 		</div>
 		<p class="instruction">
-			<h4>$!nonOfficialAccountSectionTitle</h4>
+			<h4>$tlang.getString("add.nonofficial.title")</h4>
 		</p>
 		<div class="indnt1">
 			<label for="nonOfficialAccount" class="block">
-				$!nonOfficialAccountLabel
+				$tlang.getString("add.nonofficial.label")
 			</label>
 			<textarea  id="nonOfficialAccount" name="nonOfficialAccount"  cols="35" rows="4" wrap="virtual">$!validator.escapeHtmlTextarea($!nonOfficialAccountValue)</textarea>
 			<br /><span class="instruction">
