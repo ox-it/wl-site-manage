@@ -117,9 +117,9 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
     	
     	// official participant
     	UIInput.make(participantForm, "officialAccountParticipant", "#{siteAddParticipantHandler.officialAccountParticipant}", handler.officialAccountParticipant);
-    	UIOutput.make(participantForm, "officialAccountSectionTitle", handler.getServerConfigurationString("officialAccountSectionTitle"));
+    	UIOutput.make(participantForm, "officialAccountSectionTitle", messageLocator.getMessage("add.official.title"));
     	UIOutput.make(participantForm, "officialAccountName", handler.getServerConfigurationString("officialAccountName"));
-    	UIOutput.make(participantForm, "officialAccountLabel", handler.getServerConfigurationString("officialAccountLabel"));
+    	UIOutput.make(participantForm, "officialAccountLabel", messageLocator.getMessage("add.official.label"));
     	
     	String pickerAction = handler.getServerConfigurationString("officialAccountPickerAction");
 		if (pickerAction != null && !"".equals(pickerAction))
@@ -133,9 +133,9 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
     	if (allowAddNonOfficialParticipant.equalsIgnoreCase("true"))
     	{
     		UIInput.make(participantForm, "nonOfficialAccountParticipant", "#{siteAddParticipantHandler.nonOfficialAccountParticipant}", handler.nonOfficialAccountParticipant);
-	    	UIOutput.make(participantForm, "nonOfficialAccountSectionTitle", handler.getServerConfigurationString("nonOfficialAccountSectionTitle"));
+	    	UIOutput.make(participantForm, "nonOfficialAccountSectionTitle", messageLocator.getMessage("add.nonofficial.title"));
 	    	UIOutput.make(participantForm, "nonOfficialAccountName", handler.getServerConfigurationString("nonOfficialAccountName"));
-	    	UIOutput.make(participantForm, "nonOfficialAccountLabel", handler.getServerConfigurationString("nonOfficialAccountLabel"));
+	    	UIOutput.make(participantForm, "nonOfficialAccountLabel", messageLocator.getMessage("add.nonofficial.label"));
     	}
     	
     	// role choice
