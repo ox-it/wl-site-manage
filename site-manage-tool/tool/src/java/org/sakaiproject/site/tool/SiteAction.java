@@ -9887,7 +9887,7 @@ public class SiteAction extends PagedResourceActionII {
 			String role = (String) state.getAttribute("form_selectedRole");
 			if (!same_role) {
 				// if all added participants have different role
-				role = (String) selectedRoles.get(eId);
+				role = (String) selectedRoles.get(p.getUniqname());
 			}
 
 			boolean officialAccount = eId.indexOf(EMAIL_CHAR) == -1;
