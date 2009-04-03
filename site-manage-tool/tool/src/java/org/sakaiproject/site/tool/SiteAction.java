@@ -9831,7 +9831,7 @@ public class SiteAction extends PagedResourceActionII {
 				uniqnameSet.add(p.getUniqname());
 			} else {
 				// found duplicates
-				s.add(p.getUniqname());
+				s.add(p.getDisplayId());
 			}
 		}
 
