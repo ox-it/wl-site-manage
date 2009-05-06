@@ -10,8 +10,9 @@
  Your password is: ${newPassword} 
  You can later go to the Account tool in your My Workspace site to reset it.
 
-
-
+By using this account to login to WebLearn you are agreeing to abide by the \
+University of Oxford's Regulations Relating to the use of Information Technology Facilities.\
+See: http://www.admin.ox.ac.uk/statutes/regulations/196-052.shtml
 </message>
  <locale></locale>
 </emailTemplate>
