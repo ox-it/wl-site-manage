@@ -10064,6 +10064,7 @@ public class SiteAction extends PagedResourceActionII {
 					+ newUserPassword + "\n\n");
 			buf.append(rb.getString("java.passwordis2") + "\n\n");
 
+			buf.append(rb.getFormattedMessage("java.newuserfooter")+ "\n");
 			content = buf.toString();
 			EmailService.send(from, to, message_subject, content, headerTo,
 					replyTo, null);
