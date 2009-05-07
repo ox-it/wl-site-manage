@@ -191,10 +191,12 @@
 			<tr>
 				<td>$validator.escapeHtml($group.name)</td>
 				<td>
+					#if ($allowUpdateSiteMembership)
 					<form name="removeGroupForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
 						<input type="hidden" name="groupId" value="$group.id"/>
 						<input type="submit" name="eventSubmit_doRemoveGroup" value="$tlang.getString("sitegen.siteinfolist.remove")"/>
 					</form>
+					#end
 				</td>
 			</tr>
 			#end
@@ -204,7 +206,7 @@
 			</tr>
 		#end
 		</table>
-		#if ($allowUpdate)
+		#if ($allowUpdateSiteMembership)
 		<div>
 		<form method="post" action="#toolForm("SiteAction")">
 			<input type="submit" name="eventSubmit_doExternalGroupsHelper" value="$tlang.getString("sitegen.siteinfolist.addextgroup")"/>
@@ -443,7 +445,9 @@
 				#end
 			</table>
 			<div class="act">
+			#if($allowUpdateSiteMembership)
 				<input type="submit" accesskey="s" class="active" name="eventSubmit_doUpdate_participant" value="$tlang.getString("sitegen.siteinfolist.update")" />
+			#end
 		        <input type="button" onClick="javascript:window.open('?panel=UserList','','left=20,top=20,width=400,height=700,toolbar=0,scrollbars=1'); return false;" name="eventSubmit_doUserList" value="Export User List"  />
 			</div>
 		</form>
