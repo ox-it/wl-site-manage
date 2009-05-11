@@ -63,6 +63,7 @@ import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.PermissionsHelper;
 import org.sakaiproject.authz.api.Role;
+import org.sakaiproject.authz.api.RoleAlreadyDefinedException;
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.authz.cover.DevolvedSakaiSecurity;
 import org.sakaiproject.authz.cover.SecurityService;
@@ -2208,10 +2209,31 @@ public class SiteAction extends PagedResourceActionII {
 					// site cannot be set as joinable
 					context.put("disableJoinable", Boolean.TRUE);
 				}
+				
+				// Check for .auth/.anon
+				roles = getRoles(state);
+				boolean accessAuth = false;
+				boolean accessAnon = false;
+				for (Role role : (List<Role>)roles) {
+					if (".auth".equals(role.getId())) {
+						accessAuth = true;
+					} else if (".anon".equals(role.getId())) {
+						accessAnon = true;
+					}
+				}
+				
+				if (accessAnon) {
+					context.put("access", "anonymous");
+				} else if ( accessAuth) {
+					context.put("access", "authenticated");
+				} else {
+					context.put("access", "members");
+				}
 
-				context.put("roles", getRoles(state));
+				context.put("roles", roles);
 				context.put("back", "12");
 			} else {
+				// In the site creation process...
 				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 
 				if (siteInfo.site_type != null
@@ -2252,6 +2274,15 @@ public class SiteAction extends PagedResourceActionII {
 						context.put("roles", rr.getRoles());
 					} catch (GroupNotDefinedException ee) {
 					}
+				}
+				
+				// Granting of .auth/.anon
+				if (siteInfo.allow_anon) {
+					context.put("access", "anonymous");
+				} else if ( siteInfo.allow_auth) {
+					context.put("access", "authenticated");
+				} else {
+					context.put("access", "members");
 				}
 
 				// new site, go to confirmation page
@@ -6878,6 +6909,7 @@ public class SiteAction extends PagedResourceActionII {
 		String publishUnpublish = params.getString("publishunpublish");
 		String include = params.getString("include");
 		String joinable = params.getString("joinable");
+		String access = params.getString("access");
 
 		if (sEdit != null) {
 			// editing existing site
@@ -6930,6 +6962,45 @@ public class SiteAction extends PagedResourceActionII {
 				state.removeAttribute(STATE_JOINERROLE);
 				sEdit.setJoinable(false);
 				sEdit.setJoinerRole(null);
+			}
+			
+			
+			try {
+				AuthzGroup templateGroup = AuthzGroupService.getAuthzGroup("!site.roles");
+				if (access != null) {
+					if ("authenticated".equals(access)) {
+						if (sEdit.getRole(".anon") != null) {
+							sEdit.removeRole(".anon");
+						}
+						if (sEdit.getRole(".auth") == null) {
+							try {
+								sEdit.addRole(".auth", templateGroup.getRole(".auth"));
+							} catch (RoleAlreadyDefinedException e) {
+								addAlert(state, "java.authroleexists");
+							}
+						}
+					} else if ("anonymous".equals(access)) {
+						if (sEdit.getRole(".auth") != null) {
+							sEdit.removeRole(".auth");
+						}
+						if (sEdit.getRole(".anon") == null) {
+							try {
+								sEdit.addRole(".anon", templateGroup.getRole(".anon"));
+							} catch (RoleAlreadyDefinedException e) {
+								addAlert(state, "java.anonroleexists");
+							}
+						}
+					} else {
+						if (sEdit.getRole(".anon") != null) {
+							sEdit.removeRole(".anon");
+						}
+						if (sEdit.getRole(".auth") != null) {
+							sEdit.removeRole(".auth");
+						}
+					}
+				}
+			} catch (GroupNotDefinedException gnde) {
+				addAlert(state, rb.getString("java.rolenotfound"));
 			}
 
 			if (state.getAttribute(STATE_MESSAGE) == null) {
@@ -6992,6 +7063,11 @@ public class SiteAction extends PagedResourceActionII {
 				} else {
 					siteInfo.joinable = false;
 					siteInfo.joinerRole = null;
+				}
+				
+				if (access != null) {
+					siteInfo.allow_anon = "access_anonymous".equals(access);
+					siteInfo.allow_auth = "access_authenticated".equals(access);
 				}
 
 				state.setAttribute(STATE_SITE_INFO, siteInfo);
@@ -11571,6 +11647,10 @@ public class SiteAction extends PagedResourceActionII {
 		public String infoUrl = NULL_STRING;
 
 		public boolean joinable = false;
+		
+		public boolean allow_auth = false;
+		
+		public boolean allow_anon = false;
 
 		public String joinerRole = NULL_STRING;
 
