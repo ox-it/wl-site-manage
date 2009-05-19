@@ -1658,6 +1658,13 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("published", new Boolean(siteInfo.published));
 			context.put("joinable", new Boolean(siteInfo.joinable));
 			context.put("joinerRole", siteInfo.joinerRole);
+			if (siteInfo.allow_anon) {
+				context.put("access", "anonymous");
+			} else if (siteInfo.allow_auth) {
+				context.put("access", "authenticated");
+			} else {
+				context.put("access", "members");
+			}
 			context.put("newsTitles", (Hashtable) state
 					.getAttribute(STATE_NEWS_TITLES));
 			context.put("wcTitles", (Hashtable) state
