@@ -91,14 +91,28 @@
 			</th>
 			<td>
 				#if ($!published)
-					#if ($!siteJoinable)
-						$tlang.getString("sitegen.siteinfolist.sitecan")
-					#else
+					#if ("anonymous" == $!access)
+						$tlang.getString("sitegen.siteinfolist.anon")
+					#else #if ("authenticated" == $!access)
+						$tlang.getString("sitegen.siteinfolist.auth")
+					#else 
 						$tlang.getString("sitegen.siteinfolist.sitepar")
-					#end
+					#end #end
 				#else
 					## unpublished site
 					$tlang.getString("sitegen.siteinfolist.siteown")
+				#end
+			</td>
+		</tr>
+		<tr>
+			<th>
+				$tlang.getString("sitegen.siteinfolist.join")
+			</th>
+			<td>
+				#if ($!published && $!siteJoinable)
+					$tlang.getString("sitegen.siteinfolist.yes")
+				#else
+					$tlang.getString("sitegen.siteinfolist.no")
 				#end
 			</td>
 		</tr>

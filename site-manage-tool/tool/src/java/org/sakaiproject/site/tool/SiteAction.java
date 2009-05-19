@@ -1750,6 +1750,16 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("allowUpdateSiteMembership", Boolean
 						.valueOf(allowUpdateSiteMembership));
 				
+				AdditionalAccess access = getAdditionalAccess(getRoles(state));
+				
+				if (access.anon) {
+					context.put("access", "anonymous");
+				} else if ( access.auth) {
+					context.put("access", "authenticated");
+				} else {
+					context.put("access", "members");
+				}
+				
 				// Check if this site has an admin realm (site)
 				String adminRealm = DevolvedSakaiSecurity.getAdminRealm(site.getReference());
 				context.put("adminSiteTitle", getAdminReferenceName(adminRealm));
@@ -2210,21 +2220,13 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("disableJoinable", Boolean.TRUE);
 				}
 				
-				// Check for .auth/.anon
 				roles = getRoles(state);
-				boolean accessAuth = false;
-				boolean accessAnon = false;
-				for (Role role : (List<Role>)roles) {
-					if (".auth".equals(role.getId())) {
-						accessAuth = true;
-					} else if (".anon".equals(role.getId())) {
-						accessAnon = true;
-					}
-				}
+
+				AdditionalAccess access = getAdditionalAccess(roles);
 				
-				if (accessAnon) {
+				if (access.anon) {
 					context.put("access", "anonymous");
-				} else if ( accessAuth) {
+				} else if ( access.auth) {
 					context.put("access", "authenticated");
 				} else {
 					context.put("access", "members");
@@ -3125,7 +3127,19 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // buildContextForTemplate
 
-	
+	private AdditionalAccess getAdditionalAccess(List roles) {
+		// Check for .auth/.anon
+		AdditionalAccess access = new AdditionalAccess();
+		for (Role role : (List<Role>)roles) {
+			if (".auth".equals(role.getId())) {
+				access.auth = true;
+			} else if (".anon".equals(role.getId())) {
+				access.anon = true;
+			}
+		}
+		return access;
+	}
+
 	public String buildUserListPanelContext(VelocityPortlet portlet,
 			Context context, RunData data, SessionState state)
 	{   /*
@@ -5257,6 +5271,11 @@ public class SiteAction extends PagedResourceActionII {
 
 			Site site = getStateSite(state);
 
+			SiteInfo siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
+			if (siteInfo != null) {
+				addAuthAnonRoles(state, site, siteInfo.allow_auth, siteInfo.allow_anon);
+			}
+
 			// for course sites
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -6965,43 +6984,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			
 			
-			try {
-				AuthzGroup templateGroup = AuthzGroupService.getAuthzGroup("!site.roles");
-				if (access != null) {
-					if ("authenticated".equals(access)) {
-						if (sEdit.getRole(".anon") != null) {
-							sEdit.removeRole(".anon");
-						}
-						if (sEdit.getRole(".auth") == null) {
-							try {
-								sEdit.addRole(".auth", templateGroup.getRole(".auth"));
-							} catch (RoleAlreadyDefinedException e) {
-								addAlert(state, "java.authroleexists");
-							}
-						}
-					} else if ("anonymous".equals(access)) {
-						if (sEdit.getRole(".auth") != null) {
-							sEdit.removeRole(".auth");
-						}
-						if (sEdit.getRole(".anon") == null) {
-							try {
-								sEdit.addRole(".anon", templateGroup.getRole(".anon"));
-							} catch (RoleAlreadyDefinedException e) {
-								addAlert(state, "java.anonroleexists");
-							}
-						}
-					} else {
-						if (sEdit.getRole(".anon") != null) {
-							sEdit.removeRole(".anon");
-						}
-						if (sEdit.getRole(".auth") != null) {
-							sEdit.removeRole(".auth");
-						}
-					}
-				}
-			} catch (GroupNotDefinedException gnde) {
-				addAlert(state, rb.getString("java.rolenotfound"));
-			}
+			addAuthAnonRoles(state, sEdit, "authenticated".equals(access), "anonymous".equals(access));
 
 			if (state.getAttribute(STATE_MESSAGE) == null) {
 				commitSite(sEdit);
@@ -7080,6 +7063,44 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doUpdate_site_access
+
+	private void addAuthAnonRoles(SessionState state, Site site, boolean auth, boolean anon) {
+		try {
+			AuthzGroup templateGroup = AuthzGroupService.getAuthzGroup("!site.roles");
+			if (auth) {
+				if (site.getRole(".anon") != null) {
+					site.removeRole(".anon");
+				}
+				if (site.getRole(".auth") == null) {
+					try {
+						site.addRole(".auth", templateGroup.getRole(".auth"));
+					} catch (RoleAlreadyDefinedException e) {
+						addAlert(state, "java.authroleexists");
+					}
+				}
+			} else if (anon) {
+				if (site.getRole(".auth") != null) {
+					site.removeRole(".auth");
+				}
+				if (site.getRole(".anon") == null) {
+					try {
+						site.addRole(".anon", templateGroup.getRole(".anon"));
+					} catch (RoleAlreadyDefinedException e) {
+						addAlert(state, "java.anonroleexists");
+					}
+				}
+			} else {
+				if (site.getRole(".anon") != null) {
+					site.removeRole(".anon");
+				}
+				if (site.getRole(".auth") != null) {
+					site.removeRole(".auth");
+				}
+			}
+		} catch (GroupNotDefinedException gnde) {
+			addAlert(state, rb.getString("java.rolenotfound"));
+		}
+	}
 	
 	public void doUpdate_site_admin(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
@@ -11732,6 +11753,16 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // SiteInfo
+	
+	/**
+	 * Allow the additional access details to be passed and returned form 
+	 * methods easily.
+	 * @author buckett
+	 */
+	public class AdditionalAccess {
+		boolean auth = false;
+		boolean anon = false;
+	}
 
 	// dissertation tool related
 	/**
