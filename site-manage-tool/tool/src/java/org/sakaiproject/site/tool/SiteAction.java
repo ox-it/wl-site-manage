@@ -7066,8 +7066,8 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				
 				if (access != null) {
-					siteInfo.allow_anon = "access_anonymous".equals(access);
-					siteInfo.allow_auth = "access_authenticated".equals(access);
+					siteInfo.allow_anon = "anonymous".equals(access);
+					siteInfo.allow_auth = "authenticated".equals(access);
 				}
 
 				state.setAttribute(STATE_SITE_INFO, siteInfo);
