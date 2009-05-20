@@ -8668,7 +8668,12 @@ public class SiteAction extends PagedResourceActionII {
 				.getAttribute(STATE_SITE_INSTANCE_ID));
 		try {
 			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-			roles.addAll(realm.getRoles());
+			// Filter the roles so we only display user roles
+			for (Role role: (Set<Role>)realm.getRoles()) {
+				if (isUserRole(role)) {
+					roles.add(role);
+				}
+			}
 			Collections.sort(roles);
 		} catch (GroupNotDefinedException e) {
 			M_log.warn("SiteAction.getRoles IdUnusedException " + realmId);
@@ -8676,6 +8681,10 @@ public class SiteAction extends PagedResourceActionII {
 		return roles;
 
 	} // getRoles
+	
+	private boolean isUserRole(Role role) {
+		return !role.getId().startsWith(".");
+	}
 
 	private void addSynopticTool(SitePage page, String toolId,
 			String toolTitle, String layoutHint) {
