@@ -1658,13 +1658,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("published", new Boolean(siteInfo.published));
 			context.put("joinable", new Boolean(siteInfo.joinable));
 			context.put("joinerRole", siteInfo.joinerRole);
-			if (siteInfo.allow_anon) {
-				context.put("access", "anonymous");
-			} else if (siteInfo.allow_auth) {
-				context.put("access", "authenticated");
-			} else {
-				context.put("access", "members");
-			}
+			addAccess(context, siteInfo.allow_anon, siteInfo.allow_auth);
 			context.put("newsTitles", (Hashtable) state
 					.getAttribute(STATE_NEWS_TITLES));
 			context.put("wcTitles", (Hashtable) state
@@ -1757,15 +1751,9 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("allowUpdateSiteMembership", Boolean
 						.valueOf(allowUpdateSiteMembership));
 				
-				AdditionalAccess access = getAdditionalAccess(getRoles(state));
+				AdditionalAccess access = getAdditionalAccess(site);
 				
-				if (access.anon) {
-					context.put("access", "anonymous");
-				} else if ( access.auth) {
-					context.put("access", "authenticated");
-				} else {
-					context.put("access", "members");
-				}
+				addAccess(context, access.anon, access.auth);
 				
 				// Check if this site has an admin realm (site)
 				String adminRealm = DevolvedSakaiSecurity.getAdminRealm(site.getReference());
@@ -2229,15 +2217,9 @@ public class SiteAction extends PagedResourceActionII {
 				
 				roles = getRoles(state);
 
-				AdditionalAccess access = getAdditionalAccess(roles);
+				AdditionalAccess access = getAdditionalAccess(site);
 				
-				if (access.anon) {
-					context.put("access", "anonymous");
-				} else if ( access.auth) {
-					context.put("access", "authenticated");
-				} else {
-					context.put("access", "members");
-				}
+				addAccess(context, access.anon, access.auth);
 
 				context.put("roles", roles);
 				context.put("back", "12");
@@ -2285,14 +2267,7 @@ public class SiteAction extends PagedResourceActionII {
 					}
 				}
 				
-				// Granting of .auth/.anon
-				if (siteInfo.allow_anon) {
-					context.put("access", "anonymous");
-				} else if ( siteInfo.allow_auth) {
-					context.put("access", "authenticated");
-				} else {
-					context.put("access", "members");
-				}
+				addAccess(context, siteInfo.allow_anon, siteInfo.allow_auth);
 
 				// new site, go to confirmation page
 				context.put("continue", "10");
@@ -3134,10 +3109,20 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // buildContextForTemplate
 
-	private AdditionalAccess getAdditionalAccess(List roles) {
+	private void addAccess(Context context, boolean anon, boolean auth) {
+		if (anon) {
+			context.put("access", "anonymous");
+		} else if (auth) {
+			context.put("access", "authenticated");
+		} else {
+			context.put("access", "members");
+		}
+	}
+
+	private AdditionalAccess getAdditionalAccess(AuthzGroup realm) {
 		// Check for .auth/.anon
 		AdditionalAccess access = new AdditionalAccess();
-		for (Role role : (List<Role>)roles) {
+		for (Role role : (Set<Role>)realm.getRoles()) {
 			if (".auth".equals(role.getId())) {
 				access.auth = true;
 			} else if (".anon".equals(role.getId())) {
