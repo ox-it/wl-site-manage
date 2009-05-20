@@ -35,37 +35,27 @@
 				$tlang.getString("ediacc.pubsit")
 			</label>
 		</p>	
-		#if (!$!disableJoinable || $!publicChangeable)
-			<h4>
-				$tlang.getString("ediacc.gloacc")
-			</h4>
+		<h4>$tlang.getString("ediacc.addit")</h4>
 			<p class="instruction">
-				$tlang.getString("ediacc.yousitcan")
+			$tlang.getString("ediacc.additin")
 			</p>
-		#end
-		#if ($!publicChangeable)
 			<p class="checkbox indnt1">
-				<input type="radio" name="include" id="access_private" value="false" #if(!$!include)checked="checked"#end />
-				<label for="access_private">
-					$tlang.getString("ediacc.pri")
-				</label>
+				<input name="access" value="members" type="radio" id="access_members" #if($access == "members")checked="true"#end>
+				<label for="access_members">$tlang.getString("ediacc.noextra")</label>
 			</p>
-			<p class="checkbox indnt1" style="margin-bottom:2em">
-				<input type="radio" name="include" id="access_public" value="true" #if($!include)checked="checked"#end />
-				<label for="access_public">
-					$tlang.getString("ediacc.dismysit")
-				</label>
-	##			<tr>
-	##				<td>
-	##					<input type="radio" name="publicChoice" id="access" value="all" />
-	##				</td>
-	##				<td>
-	##					Public - All Materials Shared
-	##				</td>
-	##			</tr>
+			<p class="checkbox indnt1">
+				<input name="access" value="authenticated" type="radio" id="access_authenticated"  #if($access == "authenticated")checked="true"#end>
+				<label for="access_authenticated">$tlang.getString("ediacc.auth")</label>
 			</p>
-		#end
+			<p class="checkbox indnt1">
+				<input name="access" value="anonymous" type="radio" id="access_anonymous" #if($access == "anonymous")checked="true"#end>
+				<label for="access_anonymous">$tlang.getString("ediacc.anon")</label>
+			</p>
 		#if (!$!disableJoinable)
+			<h4>$tlang.getString("ediacc.join")</h4>
+			<p class="instruction">
+			$tlang.getString("ediacc.joinin")
+			</p>
 			## set site joinable and joiner role
 			<p class="checkbox indnt1">
 				<input type="checkbox" name="joinable" id="joinable" value="true" #if ($joinable) checked="checked"#end />
@@ -91,6 +81,25 @@
 				</select>
 			</p>
 		#end
+		#if ($!publicChangeable)
+			<h4>$tlang.getString("ediacc.public")</h4>
+			<p class="instruction">
+			$tlang.getString("ediacc.publicin")
+			</p>
+			<p class="checkbox indnt1">
+				<input type="radio" name="include" id="access_private" value="false" #if(!$!include)checked="checked"#end />
+				<label for="access_private">
+					$tlang.getString("ediacc.pri")
+				</label>
+			</p>
+			<p class="checkbox indnt1" style="margin-bottom:2em">
+				<input type="radio" name="include" id="access_public" value="true" #if($!include)checked="checked"#end />
+				<label for="access_public">
+					$tlang.getString("ediacc.dismysit")
+				</label>
+			</p>
+		#end
+		
 		<input type="hidden" name="continue" value="$!continue" />
 		<input type="hidden" name="template-index" value="18" />
 		<input type="hidden" name="back" value="$!back" />
