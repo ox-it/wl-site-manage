@@ -245,7 +245,8 @@ public class SiteAction extends PagedResourceActionII {
 			"-findCourse", // 53
 			"-siteInfo-changeAdmin", // 54
 			"-selectAdmin", // 55
-			"-exportMemberList" // 56
+			"-exportMemberList", // 56
+			"-selectAdmin", //57
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -1826,7 +1827,7 @@ public class SiteAction extends PagedResourceActionII {
 								&& !isGradToolSite) {
 							// hide site duplicate and import
 							// for GRADTOOLS type of sites
-							if (SiteService.allowAddSite(null))
+							if (SiteService.allowAddSite(null) || SiteService.allowAddManagedSite())
 							{
 								b.add(new MenuEntry(rb.getString("java.duplicate"),
 										"doMenu_siteInfo_duplicate"));
@@ -3087,6 +3088,7 @@ public class SiteAction extends PagedResourceActionII {
 
 		
 		case 55:
+		case 57:
 			/*
 			 * build context for chef_site-selectAdmin.vm
 			 * Used to choose an admin realm during site creation. 
@@ -3101,8 +3103,10 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("adminSite", state.getAttribute(STATE_ADMIN_REALM));
 			context.put("allowUnmanaged", unmanaged);
 			context.put("canSelect", unmanaged || possibleAdminSites.size() > 0);
+			context.put("template", Integer.toString(index));
 			
-			return (String)getContext(data).get("template") + TEMPLATE[55];
+			return (String)getContext(data).get("template") + TEMPLATE[index];
+		
 		}
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
@@ -3999,36 +4003,35 @@ public class SiteAction extends PagedResourceActionII {
 	public void doNew_site(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		ParameterParser params = data.getParameters();
 
 		// start clean
 		cleanState(state);
 		
-		canChooseAdminSite(data, state);
+		if (canChooseAdminSite(data, state)) {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "55");
+		} else {
+			doSite_selectAdmin(state, params);
+		}
+
 	}
 
-	private void canChooseAdminSite(RunData data, SessionState state) {
-		List<Entity> adminSites = DevolvedSakaiSecurity.getAvailableAdminRealms(null); 
+	private boolean canChooseAdminSite(RunData data, SessionState state) {
+		List<Entity> adminSites = DevolvedSakaiSecurity.getAvailableAdminRealms(null);
+		boolean canChoose = true;
 		if (adminSites.size() == 1 && !SiteService.allowAddSite(null)) {
 			String adminRealm = adminSites.get(0).getReference();
 			state.setAttribute(STATE_ADMIN_REALM, adminRealm);
-			state.setAttribute(STATE_ADMIN_REALM_FROM_USER, false);
-			doSite_selectAdmin(data);
+			canChoose = false;
 		} else if (adminSites.size() == 0 && SiteService.allowAddSite(null)) {
 			state.setAttribute(STATE_ADMIN_REALM, "unmanaged");
-			state.setAttribute(STATE_ADMIN_REALM_FROM_USER, false);
-			doSite_selectAdmin(data);
-		} else {
-			state.setAttribute(STATE_TEMPLATE_INDEX, "55");
-			state.setAttribute(STATE_ADMIN_REALM_FROM_USER, true);
+			canChoose = false;
 		}
+		state.setAttribute(STATE_ADMIN_REALM_FROM_USER, canChoose);
+		return canChoose;
 	}
 
-	public void doSite_selectAdmin(RunData data) {
-			
-		SessionState state = ((JetspeedRunData) data)
-			.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-			
-		ParameterParser params = data.getParameters();
+	public void doSite_selectAdmin(SessionState state, ParameterParser params) {
 		
 		String adminSite = params.getString("adminSite");
 		
@@ -5973,6 +5976,18 @@ public class SiteAction extends PagedResourceActionII {
 			state.removeAttribute(STATE_TERM_SELECTED);
 			removeAddClassContext(state);
 			state.setAttribute(STATE_TEMPLATE_INDEX, "43");
+		} else if ( currentIndex.equals("55")) {
+			state.removeAttribute(STATE_ADMIN_REALM);
+			state.removeAttribute(STATE_ADMIN_REALM_FROM_USER);
+			doCancel_create(data);
+		} else if ( currentIndex.equals("57")) {
+			state.removeAttribute(STATE_ADMIN_REALM);
+			state.removeAttribute(STATE_ADMIN_REALM_FROM_USER);
+			state.setAttribute(STATE_TEMPLATE_INDEX, "12");
+		} else if ( currentIndex.equals("29")) {
+			state.removeAttribute(STATE_ADMIN_REALM);
+			state.removeAttribute(STATE_ADMIN_REALM_FROM_USER);
+			state.setAttribute(STATE_TEMPLATE_INDEX, "12");
 		}
 		
 
@@ -6391,8 +6406,11 @@ public class SiteAction extends PagedResourceActionII {
 	public void doMenu_siteInfo_duplicate(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-
-		if (state.getAttribute(STATE_MESSAGE) == null) {
+		
+		if (canChooseAdminSite(data, state)) {
+			// Need to reuse the same template...
+			state.setAttribute(STATE_TEMPLATE_INDEX, "57");
+		} else if (state.getAttribute(STATE_MESSAGE) == null) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "29");
 		}
 
@@ -6638,7 +6656,11 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
 		} else if (SITE_MODE_HELPER.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "1");
-			canChooseAdminSite(data, state);
+			if (canChooseAdminSite(data, state)) {
+				state.setAttribute(STATE_TEMPLATE_INDEX, "55");
+			} else {
+				doSite_selectAdmin(state, data.getParameters());
+			}
 		} else if (SITE_MODE_SITEINFO.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))){
 
 			String siteId = ToolManager.getCurrentPlacement().getContext();
@@ -7621,9 +7643,14 @@ public class SiteAction extends PagedResourceActionII {
 						try {
 							String oSiteId = (String) state
 									.getAttribute(STATE_SITE_INSTANCE_ID);
+							String adminRealm = (String)state.getAttribute(STATE_ADMIN_REALM);
+							if ("unmanaged".equals(adminRealm))
+							{
+								adminRealm = null;
+							}
 							String nSiteId = IdManager.createUuid();
 							Site site = SiteService.addSite(nSiteId,
-									getStateSite(state));
+									getStateSite(state), adminRealm);
 
 							try {
 								SiteService.save(site);
@@ -7918,6 +7945,25 @@ public class SiteAction extends PagedResourceActionII {
 				state.removeAttribute(SORTED_ASC);
 			}
 			break;
+		case 55:
+			if (forward) {
+				doSite_selectAdmin(state, params);
+			}
+			break;
+		case 57:
+			if (forward) {
+				String adminSite = params.getString("adminSite");
+
+				if (adminSite != null && adminSite.length() > 0) {
+					state.setAttribute(STATE_ADMIN_REALM, adminSite);
+				}
+				if (state.getAttribute(STATE_ADMIN_REALM) != null) {
+					state.setAttribute(STATE_TEMPLATE_INDEX, "29");
+				} else {
+					// Error Message
+					addAlert(state, rb.getString("java.noadminsite"));
+				}
+			}
 		}
 
 	}// actionFor Template
