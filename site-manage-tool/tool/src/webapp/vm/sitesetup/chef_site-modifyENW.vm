@@ -193,7 +193,7 @@
 		<input type="hidden" name="template-index" value="26" />
 		<input type="hidden" name="continue" value="$continue" />
 		<div class="act">
-			<input type="button" name="Continue" 
+			<input type="submit" name="Continue"
 				accesskey="s"
 				class="active"
 				value="$tlang.getString('gen.continue')" 
