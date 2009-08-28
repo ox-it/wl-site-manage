@@ -676,7 +676,7 @@ public class SiteAddParticipantHandler {
 						// look for user based on eid first
 						u = UserDirectoryService.getUserByEid(officialAccount);
 					} catch (UserNotDefinedException e) {
-						M_log.warn(this + ".checkAddParticipant: " + officialAccount + " " + messageLocator.getMessage("java.username") + " ");
+						M_log.debug(this + ".checkAddParticipant: "+  messageLocator.getMessage("java.username", officialAccount));
 						//Changed user lookup to satisfy BSP-1010 (jholtzman)
 						// continue to look for the user by their email address
 						Collection<User> usersWithEmail = UserDirectoryService.findUsersByEmail(officialAccount);
