@@ -786,7 +786,7 @@ public class SiteAddParticipantHandler {
 							// look for user based on eid first
 							u = userDirectoryService.getUserByEid(officialAccount);
 						} catch (UserNotDefinedException e) {
-							M_log.debug(this + ".checkAddParticipant: " + messageLocator.getMessage("java.username",officialAccount));
+							M_log.debug(this + ".checkAddParticipant: "+  messageLocator.getMessage("java.username", officialAccount));
 						}
 					}
 					else
