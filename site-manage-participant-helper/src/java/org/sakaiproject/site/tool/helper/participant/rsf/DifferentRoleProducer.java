@@ -139,10 +139,12 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
             
         	String userEId = it.next();
         	String userName = userEId;
+        	String displayId = userEId;
         	try
         	{
         		User u = userDirectoryService.getUserByEid(userEId);
         		userName = u.getSortName();
+        		displayId = u.getDisplayId();
         	}
         	catch (Exception e)
         	{
@@ -153,7 +155,7 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
 
             // SECOND LINE
             UIBranchContainer userRow = UIBranchContainer.make(differentRoleForm, "user-row:", curItemNum);
-            UIOutput.make(userRow, "user-name", userEId + "(" + userName + ")");
+            UIOutput.make(userRow, "user-name", displayId + "(" + userName + ")");
             UISelect.make(userRow, "role-select", roleIds, "siteAddParticipantHandler.userRoleEntries." + i + ".role", handler.getUserRole(userEId));
 
   		}

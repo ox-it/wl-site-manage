@@ -148,17 +148,19 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
         for (Iterator<String> it=handler.getUsers().iterator(); it.hasNext(); ) {
         	String userEId = it.next();
         	String userName = userEId;
+        	String displayId = userEId;
         	try
         	{
         		User u = userDirectoryService.getUserByEid(userEId);
         		userName = u.getSortName();
+        		displayId = u.getDisplayId();
         	}
         	catch (Exception e)
         	{
         		M_log.info(this + ":fillComponents: cannot find user with eid=" + userEId);
         	}
             UIBranchContainer userRow = UIBranchContainer.make(sameRoleForm, "user-row:", userEId);
-            UIOutput.make(userRow, "user-label", userEId + "(" + userName + ")");
+            UIOutput.make(userRow, "user-label", displayId + "(" + userName + ")");
         }
     	
     	UICommand.make(sameRoleForm, "continue", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.processSameRoleContinue}");

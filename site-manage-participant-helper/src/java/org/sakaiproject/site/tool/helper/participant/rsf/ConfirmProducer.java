@@ -136,10 +136,12 @@ public class ConfirmProducer implements ViewComponentProducer, NavigationCaseRep
         for (UserRoleEntry userRoleEntry:userTable) {
         	String userEId = userRoleEntry.userEId;
         	String userName = userEId;
+        	String displayId = userEId;
         	try
         	{
         		User u = userDirectoryService.getUserByEid(userEId);
         		userName = u.getSortName();
+        		displayId = u.getDisplayId();
         	}
         	catch (Exception e)
         	{
@@ -147,7 +149,7 @@ public class ConfirmProducer implements ViewComponentProducer, NavigationCaseRep
         	}
             UIBranchContainer userRow = UIBranchContainer.make(confirmForm, "user-row:", userEId);
             UIOutput.make(userRow, "user-name", userName);
-            UIOutput.make(userRow, "user-eid", userEId);
+            UIOutput.make(userRow, "user-eid", displayId);
             UIOutput.make(userRow, "user-role", userRoleEntry.role);
         }
         
