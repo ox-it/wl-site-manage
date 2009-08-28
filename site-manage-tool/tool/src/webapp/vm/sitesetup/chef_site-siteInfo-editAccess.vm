@@ -95,6 +95,22 @@
 				$tlang.getString("ediacc.unpubsit")
 			</label>
 		</p>
+		<h4>$tlang.getString("ediacc.addit")</h4>
+			<p class="instruction">
+			$tlang.getString("ediacc.additin")
+			</p>
+			<p class="checkbox indnt1">
+				<input name="access" value="members" type="radio" id="access_members" #if($access == "members")checked="true"#end>
+				<label for="access_members">$tlang.getString("ediacc.noextra")</label>
+			</p>
+			<p class="checkbox indnt1">
+				<input name="access" value="authenticated" type="radio" id="access_authenticated"  #if($access == "authenticated")checked="true"#end>
+				<label for="access_authenticated">$tlang.getString("ediacc.auth")</label>
+			</p>
+			<p class="checkbox indnt1">
+				<input name="access" value="anonymous" type="radio" id="access_anonymous" #if($access == "anonymous")checked="true"#end>
+				<label for="access_anonymous">$tlang.getString("ediacc.anon")</label>
+			</p>
 		## site visibility
 		<h4>
 			$tlang.getString("ediacc.vis")
@@ -120,10 +136,6 @@
 				#if(!$!site)$tlang.getString("ediacc.gloacc2")#end
 			</p>
 			<p class="checkbox indnt1">
-				<input type="radio" name="include" id="access_private" value="false" #if(!$!include)checked="checked"#end />
-				<label for="access_private">
-					$tlang.getString("ediacc.pri")
-				</label>
 			</p>
 			<p class="checkbox indnt1" style="margin-bottom:2em">
 				<input type="radio" name="include" id="access_public" value="true" #if($!include)checked="checked"#end
@@ -212,6 +224,8 @@
 			</p>
 			<p/>
 		</div>
+			<p/>
+		</div>		
 		<input type="hidden" name="continue" value="$!continue" />
 		<input type="hidden" name="back" value="$!backIndex" />
 		<input type="hidden" name="templateIndex" value="$!templateIndex" />
