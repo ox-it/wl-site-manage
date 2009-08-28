@@ -774,7 +774,6 @@ public class SiteAddParticipantHandler {
 				// if there is some text, try to use it
 				if (officialAccount != null) {
 					// automatically add nonOfficialAccount account
-					Participant participant = new Participant();
 					User u = null;
 					StringBuffer eidsForAllMatches = new StringBuffer();
 					StringBuffer eidsForAllMatchesAlertBuffer = new StringBuffer();
@@ -865,11 +864,6 @@ public class SiteAddParticipantHandler {
 							// user already exists in the site, cannot be added
 							// again
 							existingUsers.add(officialAccount);
-						} else {
-							participant.name = u.getDisplayName();
-							participant.uniqname = u.getEid();
-							participant.active = true;
-							pList.add(participant);
 						}
 						
 						// update the userRoleTable
@@ -956,7 +950,6 @@ public class SiteAddParticipantHandler {
 				                new Object[] { userEid }, 
 				                TargettedMessage.SEVERITY_ERROR));
 					} else {
-						Participant participant = new Participant();
 						try {
 							// if the nonOfficialAccount user already exists
 							User u = userDirectoryService
@@ -965,11 +958,6 @@ public class SiteAddParticipantHandler {
 								// user already exists in the site, cannot be
 								// added again
 								existingUsers.add(userEid);
-							} else {
-								participant.name = u.getDisplayName();
-								participant.uniqname = userEid;
-								participant.active = true;
-								pList.add(participant);
 							}
 						} catch (UserNotDefinedException e) {
 							M_log.debug("no user with eid: " + userEid);
@@ -996,35 +984,15 @@ public class SiteAddParticipantHandler {
 							}
 							
 							if (u == null) {
-							
-								// if the nonOfficialAccount user is not in the system
-								// yet
-								participant.name = userEid;
-								participant.uniqname = userEid; // TODO:
-								// what
-								// would
-								// the
-								// UDS
-								// case
-								// this
-								// name
-								// to?
-								// -ggolden
-								participant.active = true;
-								
 								if (!userDirectoryService.allowAddUser())
 								{
 									targettedMessageList.addMessage(new TargettedMessage("java.haveadd",new Object[] { userEid }, TargettedMessage.SEVERITY_ERROR));
 									M_log.warn(this + ".checkAddParticipant: user" + userDirectoryService.getCurrentUser()!= null ? userDirectoryService.getCurrentUser().getEid():"" + " don't have permission to add " + userEid);
 								}
-							} else  {
+							} else {
 								M_log.debug("adding: " + u.getDisplayName() + ", " + u.getEid());
-								participant.name = u.getDisplayName();
-								participant.uniqname = u.getEid();
-								participant.active = true;
 								userEid = u.getEid();
 							}
-							pList.add(participant);
 						}
 						
 						// update the userRoleTable
@@ -1047,9 +1015,6 @@ public class SiteAddParticipantHandler {
 		if ("same_role".equals(roleChoice)) {
 			targettedMessageList.addMessage(new TargettedMessage("java.roletype", null, TargettedMessage.SEVERITY_ERROR));
 		}
-
-		// remove duplicate or existing user from participant list
-		pList = removeDuplicateParticipants(pList);
 
 		// if the add participant list is empty after above removal, stay in the
 		// current page
