@@ -5929,11 +5929,11 @@ public class SiteAction extends PagedResourceActionII {
 			state.removeAttribute(STATE_TERM_SELECTED);
 			removeAddClassContext(state);
 			state.setAttribute(STATE_TEMPLATE_INDEX, "43");
-		} else if ( currentIndex.equals("55")) {
+		} else if ( currentIndex.equals("65")) {
 			state.removeAttribute(STATE_ADMIN_REALM);
 			state.removeAttribute(STATE_ADMIN_REALM_FROM_USER);
 			doCancel_create(data);
-		} else if ( currentIndex.equals("57")) {
+		} else if ( currentIndex.equals("63")) {
 			state.removeAttribute(STATE_ADMIN_REALM);
 			state.removeAttribute(STATE_ADMIN_REALM_FROM_USER);
 			state.setAttribute(STATE_TEMPLATE_INDEX, "12");
@@ -6389,7 +6389,7 @@ public class SiteAction extends PagedResourceActionII {
 		
 		if (canChooseAdminSite(data, state)) {
 			// Need to reuse the same template...
-			state.setAttribute(STATE_TEMPLATE_INDEX, "57");
+			state.setAttribute(STATE_TEMPLATE_INDEX, "63");
 		} else if (state.getAttribute(STATE_MESSAGE) == null) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "29");
 		}
@@ -6554,7 +6554,7 @@ public class SiteAction extends PagedResourceActionII {
 		} else if (SITE_MODE_HELPER.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "1");
 			if (canChooseAdminSite(data, state)) {
-				state.setAttribute(STATE_TEMPLATE_INDEX, "55");
+				state.setAttribute(STATE_TEMPLATE_INDEX, "65");
 			} else {
 				doSite_selectAdmin(state, data.getParameters());
 			}
@@ -7740,11 +7740,6 @@ public class SiteAction extends PagedResourceActionII {
 			break;
 		case 63:
 			if (forward) {
-				doSite_selectAdmin(state, params);
-			}
-			break;
-		case 65:
-			if (forward) {
 				String adminSite = params.getString("adminSite");
 
 				if (adminSite != null && adminSite.length() > 0) {
@@ -7756,6 +7751,11 @@ public class SiteAction extends PagedResourceActionII {
 					// Error Message
 					addAlert(state, rb.getString("java.noadminsite"));
 				}
+			}
+			break;
+		case 65:
+			if (forward) {
+				doSite_selectAdmin(state, params);
 			}
 			break;
 		}
