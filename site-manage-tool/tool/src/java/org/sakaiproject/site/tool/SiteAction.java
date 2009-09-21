@@ -61,6 +61,7 @@ import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.PermissionsHelper;
 import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.authz.api.RoleAlreadyDefinedException;
+import org.sakaiproject.authz.api.RoleProvider;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.authz.cover.DevolvedSakaiSecurity;
@@ -188,6 +189,8 @@ public class SiteAction extends PagedResourceActionII {
 	
 	private static org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService questionService = (org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService) ComponentManager
 	.get(org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService.class);
+	
+	private RoleProvider roleProvider = (RoleProvider)ComponentManager.get(RoleProvider.class);
 	
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
@@ -1739,8 +1742,8 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("published", Boolean.valueOf(siteInfo.published));
 			context.put("joinable", Boolean.valueOf(siteInfo.joinable));
 			context.put("joinerRole", siteInfo.joinerRole);
-			addAccess(context, siteInfo.allow_anon, siteInfo.allow_auth);
 
+			context.put("additionalAccess", getAdditionRoles(siteInfo));
 			context.put("adminSite", getAdminReferenceName((String)state.getAttribute(STATE_ADMIN_REALM)));
 
 			context.put("importSiteTools", state
@@ -1838,9 +1841,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("allowUpdateSiteMembership", Boolean
 						.valueOf(allowUpdateSiteMembership));
 				
-				AdditionalAccess access = getAdditionalAccess(site);
-				
-				addAccess(context, access.anon, access.auth);
+				context.put("additionalAccess", getAdditionRoles(site));
 				
 				// Check if this site has an admin realm (site)
 				String adminRealm = DevolvedSakaiSecurity.getAdminRealm(site.getReference());
@@ -2379,9 +2380,9 @@ public class SiteAction extends PagedResourceActionII {
 				
 				roles = getJoinerRoles(site.getReference());
 
-				AdditionalAccess access = getAdditionalAccess(site);
+				Map<String, AdditionalRole> access = getAdditionalAccess(site);
 				
-				addAccess(context, access.anon, access.auth);
+				addAccess(context, access);
 
 				context.put("roles", roles);
 			} else {
@@ -2431,10 +2432,14 @@ public class SiteAction extends PagedResourceActionII {
 					} catch (GroupNotDefinedException ee) {
 					}
 				}
-				
-				addAccess(context, siteInfo.allow_anon, siteInfo.allow_auth);
 
-				// new site, go to confirmation page
+				Map<String, AdditionalRole> additionalRoles = loadAdditionalRoles();
+				for (AdditionalRole role: additionalRoles.values()) {
+					if (siteInfo.additionalRoles.contains(role.getId())) {
+						role.granted = true;
+					}
+				}
+				addAccess(context,additionalRoles);
 				context.put("continue", "10");
 
 				siteType = (String) state.getAttribute(STATE_SITE_TYPE);
@@ -3159,27 +3164,157 @@ public class SiteAction extends PagedResourceActionII {
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 	}
 
-	private void addAccess(Context context, boolean anon, boolean auth) {
-		if (anon) {
-			context.put("access", "anonymous");
-		} else if (auth) {
-			context.put("access", "authenticated");
-		} else {
-			context.put("access", "members");
+	private void addAccess(Context context, Map<String, AdditionalRole> access) {
+		boolean disableAdditional = access.size() == 0;
+		context.put("disableAdditional", disableAdditional);
+		if (!disableAdditional) {
+			List<AdditionalRoleGroup> roleSets = sortAdditionalRoles(access);
+			context.put("additionalRoleGroups", roleSets);
 		}
 	}
 
-	private AdditionalAccess getAdditionalAccess(AuthzGroup realm) {
-		// Check for .auth/.anon
-		AdditionalAccess access = new AdditionalAccess();
+
+	/**
+	 * Oxford specific...
+	 * @param access
+	 * @return
+	 */
+	private List<AdditionalRoleGroup> sortAdditionalRoles(
+			Map<String, AdditionalRole> access) {
+		List<AdditionalRoleGroup> roleSets = new ArrayList<AdditionalRoleGroup>();
+		roleSets.add(new AdditionalRoleGroup("General"));
+		roleSets.add(new AdditionalRoleGroup("Oxford"));
+		roleSets.add(new AdditionalRoleGroup("Oxford Card Statuses"));
+		for (String roleId : access.keySet()) {
+			// Custom Oxford Grouping.
+			int pos = 0;
+			if (roleId.startsWith(".uk.ac.ox.bod")) {
+				pos = 1;
+			} else if (roleId.startsWith(".uk.ac.ox.card")) {
+				pos = 2;
+			}
+			List <AdditionalRole> roles = roleSets.get(pos).getRoles();
+			roles.add(access.get(roleId));
+		}
+		for (AdditionalRoleGroup roleGroup: roleSets) {
+			Collections.sort(roleGroup.getRoles(), new Comparator<AdditionalRole>() {
+				public int compare(AdditionalRole o1, AdditionalRole o2) {
+					return o1.name.compareTo(o2.name);
+				}
+			});
+		}
+		return roleSets;
+	}
+
+	private List<String> getAdditionRoles(AuthzGroup realm) {
+		List<String> roles = new ArrayList<String>();
 		for (Role role : (Set<Role>)realm.getRoles()) {
-			if (".auth".equals(role.getId())) {
-				access.auth = true;
-			} else if (".anon".equals(role.getId())) {
-				access.anon = true;
+			if (!isUserRole(role)) {
+				roles.add(getRoleDisplayName(role.getId()));
 			}
 		}
-		return access;
+		// Make sure it's always in the same order.
+		Collections.sort(roles);
+		return roles;
+	}
+	
+	private List<String> getAdditionRoles(SiteInfo siteInfo) {
+		List<String> roles = new ArrayList<String>();
+		for (String roleId : siteInfo.additionalRoles) {
+			roles.add(getRoleDisplayName(roleId));
+		}
+		// Make sure it's always in the same order.
+		Collections.sort(roles);
+		return roles;
+	}
+
+	private Map<String, AdditionalRole> getAdditionalAccess(AuthzGroup realm) {
+		// Check for .auth/.anon
+		Map<String, AdditionalRole> additionalRoles = loadAdditionalRoles(); 
+		for (Role role : (Set<Role>)realm.getRoles()) {
+			if (!isUserRole(role)) {
+				AdditionalRole additionalRole = additionalRoles.get(role.getId());
+				if (additionalRole == null) {
+					additionalRole = new AdditionalRole();
+					additionalRole.id = role.getId();
+					additionalRole.name = getRoleDisplayName(role.getId());
+					additionalRole.editable = false;
+					additionalRoles.put(additionalRole.id, additionalRole);
+				}
+				additionalRole.granted = true;
+			}
+		}
+		return additionalRoles;
+	}
+	
+	/**
+	 * Load the possible additional roles for this site.
+	 * This should really all be behind an API.
+	 * @return
+	 */
+	protected Map<String, AdditionalRole> loadAdditionalRoles() {
+		Map<String, AdditionalRole> additionalRoles = new HashMap<String, AdditionalRole>();
+		if (isAllowedAnon()) {
+			AdditionalRole role = new AdditionalRole();
+			role.id = org.sakaiproject.authz.api.AuthzGroupService.ANON_ROLE;
+			role.name = getRoleDisplayName(role.id);
+			role.editable = true;
+			additionalRoles.put(role.id, role);
+		}
+		if (isAllowedAuth()) {
+			AdditionalRole role = new AdditionalRole();
+			role.id = org.sakaiproject.authz.api.AuthzGroupService.AUTH_ROLE;
+			role.name = getRoleDisplayName(role.id);
+			role.editable = true;
+			additionalRoles.put(role.id, role);
+		}
+		// 
+		if (roleProvider != null) {
+			for (String roleId : roleProvider.getAllAdditionalRoles()) {
+				AdditionalRole role = new AdditionalRole();
+				role.id = roleId;
+				role.name = getRoleDisplayName(role.id);
+				role.editable = true;
+				additionalRoles.put(role.id, role);
+			}
+		}
+		return additionalRoles;
+	}
+
+	/**
+	 * Get the display name for a role.
+	 * This should be in the API so it can be used across tools.
+	 * @param id
+	 * @return
+	 */
+	protected String getRoleDisplayName(String id) {
+		if (org.sakaiproject.authz.api.AuthzGroupService.ANON_ROLE.equals(id)) {
+			return rb.getString("ediacc.anon"); //TODO Change to java. name
+		} else if (org.sakaiproject.authz.api.AuthzGroupService.AUTH_ROLE.equals(id)) {
+			return rb.getString("ediacc.auth"); //TODO Change to java. name
+		} else if (roleProvider != null) {
+			String name = roleProvider.getDisplayName(id);
+			if (name != null) {
+				return name;
+			}
+		}
+		return id;
+	}
+	
+	/**
+	 * Is the current user allowed to grant .anon access to the site?
+	 * @return <code>true</code> if .anon can be granted.
+	 */
+	protected boolean isAllowedAnon() {
+		return ServerConfigurationService.getBoolean("sitemanage.grant.anon", false);
+	}
+	
+	/**
+	 * Is the current user allowed to grant .auth access to the site?
+	 * @return <code>true</code> if .auth can be granted.
+	 */
+	protected boolean isAllowedAuth() {
+		return ServerConfigurationService.getBoolean("sitemanage.grant.auth", false);
 	}
 
 	private String getSelectionString(List selections, int numSelections) {
@@ -5309,7 +5444,9 @@ public class SiteAction extends PagedResourceActionII {
 
 			SiteInfo siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			if (siteInfo != null) {
-				addAuthAnonRoles(state, site, siteInfo.allow_auth, siteInfo.allow_anon);
+				for (String role : siteInfo.additionalRoles) {
+					updateAdditionalRole(state, site, role, true);
+				}
 			}
 
 			Site templateSite = (Site) state.getAttribute(STATE_TEMPLATE_SITE);
@@ -7387,7 +7524,6 @@ public class SiteAction extends PagedResourceActionII {
 		readInputAndUpdateStateVariable(state, params, "joinable", STATE_JOINABLE, true);
 		readInputAndUpdateStateVariable(state, params, "joinerRole", STATE_JOINERROLE, false);
 
-		String access = params.getString("access");
 		
 		boolean publishUnpublish = state.getAttribute(STATE_SITE_ACCESS_PUBLISH) != null ? ((Boolean) state.getAttribute(STATE_SITE_ACCESS_PUBLISH)).booleanValue() : false;
 		
@@ -7412,7 +7548,17 @@ public class SiteAction extends PagedResourceActionII {
 			}
 
 			doUpdate_site_access_joinable(data, state, params, sEdit);
-			addAuthAnonRoles(state, sEdit, "authenticated".equals(access), "anonymous".equals(access));
+			
+			Map<String, AdditionalRole> additionalRoles = getAdditionalAccess(sEdit);
+			for(String role : additionalRoles.keySet()) {
+				boolean userChoice = params.getBoolean("role"+role);
+				AdditionalRole additionalRole = additionalRoles.get(role);
+				if (additionalRole.editable) {
+					if (additionalRole.granted != userChoice) {
+						updateAdditionalRole(state, sEdit, role, userChoice);
+					}
+				}
+			}
 
 			if (state.getAttribute(STATE_MESSAGE) == null) {
 				commitSite(sEdit);
@@ -7452,10 +7598,14 @@ public class SiteAction extends PagedResourceActionII {
 					siteInfo.joinable = false;
 					siteInfo.joinerRole = null;
 				}
-				
-				if (access != null) {
-					siteInfo.allow_anon = "anonymous".equals(access);
-					siteInfo.allow_auth = "authenticated".equals(access);
+				// Stash the list of roles to add to the site.
+				siteInfo.additionalRoles = new HashSet<String>();
+				Map<String, AdditionalRole> additionalRoles = loadAdditionalRoles();
+				for(String role : additionalRoles.keySet()) {
+					boolean userChoice = params.getBoolean("role"+role);
+					if (userChoice) {
+						siteInfo.additionalRoles.add(role);
+					}
 				}
 
 				state.setAttribute(STATE_SITE_INFO, siteInfo);
@@ -7467,6 +7617,35 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doUpdate_site_access
+	
+	private void updateAdditionalRole(SessionState state, Site site, String roleId, boolean add) {
+		try {
+			if (add) {
+				AuthzGroup templateGroup = AuthzGroupService.getAuthzGroup("!site.roles");
+				Role role = templateGroup.getRole(roleId);
+				if (role == null) {
+					role = templateGroup.getRole(".default");
+				}
+				if (site.getRole(roleId) == null) {
+					try {
+						site.addRole(roleId, role);
+					} catch (RoleAlreadyDefinedException e) {
+						addAlert(state, "java.authroleexists");
+					}
+				} else {
+					M_log.warn("Attempting to add a role ("+ roleId+ ") that already exists in site: "+ site.getId());
+				}
+			} else {
+				if (site.getRole(roleId) != null) {
+					site.removeRole(roleId);
+				} else {
+					M_log.warn("Attempting to remove a role ("+ roleId+ ") that isn't defined in site: "+ site.getId());
+				}
+			}
+		} catch (GroupNotDefinedException gnde) {
+			addAlert(state, rb.getString("java.rolenotfound"));
+		}
+	}
 
 	private void addAuthAnonRoles(SessionState state, Site site, boolean auth, boolean anon) {
 		try {
@@ -11039,9 +11218,7 @@ public class SiteAction extends PagedResourceActionII {
 
 		public boolean joinable = false;
 		
-		public boolean allow_auth = false;
-		
-		public boolean allow_anon = false;
+		public Set<String> additionalRoles = Collections.EMPTY_SET;
 
 		public String joinerRole = NULL_STRING;
 
@@ -11147,15 +11324,45 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // SiteInfo
-	
-	/**
-	 * Allow the additional access details to be passed and returned form 
-	 * methods easily.
-	 * @author buckett
-	 */
-	public class AdditionalAccess {
-		boolean auth = false;
-		boolean anon = false;
+
+	public class AdditionalRoleGroup {
+		public String name;
+		public List<AdditionalRole> roles;
+		
+		public AdditionalRoleGroup(String name) {
+			this.name = name;
+			this.roles = new ArrayList<AdditionalRole>();
+		}
+		public String getName() {
+			return name;
+		}
+		public List<AdditionalRole> getRoles() {
+			return roles;
+		}
+		
+		public int getSize() {
+			return roles.size();
+		}
+	}
+
+	public class AdditionalRole {
+		public String id;
+		public String name;
+		public boolean editable;
+		public boolean granted;
+		
+		public String getId() {
+			return id;
+		}
+		public String getName() {
+			return name;
+		}
+		public boolean isEditable() {
+			return editable;
+		}
+		public boolean isGranted() {
+			return granted;
+		}
 	}
 
 	// dissertation tool related
