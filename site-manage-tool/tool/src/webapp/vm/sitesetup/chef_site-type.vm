@@ -246,7 +246,7 @@
             <input type="submit" accesskey="s"  id="submitFromTemplateCourse" disabled="disabled" style="display:none" class="active" name="submitFromTemplateCourse" value="$tlang.getString('sitetype.donecourse')" onclick="showNotif('submitnotif','submitFromTemplateCourse','typeform'); document.typeform.option.value='createCourseOnTemplate'; document.typeform.submit(); return false;"/>
             ## this submit should be ther normal one
             <input type="submit" accesskey="s"  id="submitBuildOwn" disabled="disabled" class="active" name="submitBuildOwn" value="$tlang.getString('sitetype.con')" onclick="showNotif('submitnotif','submitBuildOwn','typeform'); document.typeform.option.value='siteType'; document.typeform.submit(); return false;" />
-            <input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
+		  #if($backIndex)<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />#end
             <input type="submit" accesskey="x" id="cancelCreate" name="cancelCreate" value="$tlang.getString('sitetype.can')" onclick="document.typeform.option.value='cancel'; document.typeform.submit(); return false;" />
             <span id="submitnotif" style="visibility:hidden">$tlang.getString("gen.proces")</span>
         </div>
