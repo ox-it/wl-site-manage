@@ -7008,10 +7008,37 @@ public class SiteAction extends PagedResourceActionII {
 		if (state.getAttribute(STATE_PAGESIZE_SITEINFO) == null) {
 			state.setAttribute(STATE_PAGESIZE_SITEINFO, new Hashtable());
 		}
+		
+		if (state.getAttribute(STATE_SITE_TYPES) == null) {
+			PortletConfig config = portlet.getPortletConfig();
+
+			// all site types (SITE_DEFAULT_LIST overrides tool config)
+			String t = StringUtil.trimToNull(SITE_DEFAULT_LIST);
+			if ( t == null )
+				t = StringUtil.trimToNull(config.getInitParameter("siteTypes"));
+			if (t != null) {
+				List types = new ArrayList(Arrays.asList(t.split(",")));
+				if (cms == null)
+				{
+					// if there is no CourseManagementService, disable the process of creating course site
+					String courseType = ServerConfigurationService.getString("courseSiteType", (String) state.getAttribute(STATE_COURSE_SITE_TYPE));
+					types.remove(courseType);
+				}
+					
+				state.setAttribute(STATE_SITE_TYPES, types);
+			} else {
+				t = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TYPES);
+				if (t != null) {
+					state.setAttribute(STATE_SITE_TYPES, new ArrayList(Arrays
+						.asList(t.split(","))));
+				} else {
+					state.setAttribute(STATE_SITE_TYPES, new Vector());
+				}
+			}
+		}
 
 		if (SITE_MODE_SITESETUP.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
-			
 			// need to watch out for the config question.xml existence.
 			// read the file and put it to backup folder.
 			if (SiteSetupQuestionFileParser.isConfigurationXmlAvailable())
@@ -7038,33 +7065,7 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_PAGESIZE, Integer.valueOf(200));
 			}
 		}
-		if (state.getAttribute(STATE_SITE_TYPES) == null) {
-			PortletConfig config = portlet.getPortletConfig();
 
-			// all site types (SITE_DEFAULT_LIST overrides tool config)
-			String t = StringUtils.trimToNull(SITE_DEFAULT_LIST);
-			if ( t == null )
-				t = StringUtils.trimToNull(config.getInitParameter("siteTypes"));
-			if (t != null) {
-				List types = new ArrayList(Arrays.asList(t.split(",")));
-				if (cms == null)
-				{
-					// if there is no CourseManagementService, disable the process of creating course site
-					String courseType = ServerConfigurationService.getString("courseSiteType", (String) state.getAttribute(STATE_COURSE_SITE_TYPE));
-					types.remove(courseType);
-				}
-					
-				state.setAttribute(STATE_SITE_TYPES, types);
-			} else {
-				t = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TYPES);
-				if (t != null) {
-					state.setAttribute(STATE_SITE_TYPES, new ArrayList(Arrays
-						.asList(t.split(","))));
-				} else {
-					state.setAttribute(STATE_SITE_TYPES, new Vector());
-				}
-			}
-		}
 		
 		// show UI for adding non-official participant(s) or not
 		// if nonOfficialAccount variable is set to be false inside sakai.properties file, do not show the UI section for adding them.
