@@ -14513,6 +14513,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 	private void cleanStateHelper(SessionState state) {
 		state.removeAttribute(STATE_SITE_MODE);
 		state.removeAttribute(STATE_TEMPLATE_INDEX);
+		state.removeAttribute(STATE_VISITED_TEMPLATES);
 		state.removeAttribute(STATE_INITIALIZED);
 	}
 	
