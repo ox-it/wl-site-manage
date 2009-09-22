@@ -177,7 +177,7 @@
 				<span id="templateNonCourseInstruction" style="display:none">$tlang.getString("sitetype.templatefinalstepinstruction")</span>
 		</div>	
 		<div class ="act" style="padding-top:1em;">
-			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
+			#if($backIndex)<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />#end
 			#* this submit should create the site from the template and redirect user to site
 			 it should be set style="display:none" if user is coming back
 			 ot this template from building own flow
