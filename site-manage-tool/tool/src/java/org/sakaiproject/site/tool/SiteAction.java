@@ -11749,6 +11749,7 @@ public class SiteAction extends PagedResourceActionII {
 	private void cleanStateHelper(SessionState state) {
 		state.removeAttribute(STATE_SITE_MODE);
 		state.removeAttribute(STATE_TEMPLATE_INDEX);
+		state.removeAttribute(STATE_VISITED_TEMPLATES);
 		state.removeAttribute(STATE_INITIALIZED);
 	}
 	
