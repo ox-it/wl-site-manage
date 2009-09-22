@@ -118,11 +118,11 @@
 						</p>
 					#end
 		#end
-		<input type="hidden" name="back" value="$!backIndex" />
+		#if ($backIndex)<input type="hidden" name="back" value="$!backIndex" />#end
 		<input type="hidden" name="templateIndex" value="$!templateIndex" />
 		<div class ="act">
 			<input type="submit" accesskey="s"  class="active" name="eventSubmit_doSite_type" value="$tlang.getString("sitetype.con")" />
-			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
+			#if($backIndex)<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />#end
 			<input type="submit" accesskey="x" name="eventSubmit_doCancel_create" value="$tlang.getString("sitetype.can")" />
 		</div>
 	</form>				
