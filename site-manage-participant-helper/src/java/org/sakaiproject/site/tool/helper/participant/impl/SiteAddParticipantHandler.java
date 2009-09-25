@@ -1027,7 +1027,7 @@ public class SiteAddParticipantHandler {
 							&& !isValidDomain(userEid)) {
 						// wrong string inside nonOfficialAccount id
 						targettedMessageList.addMessage(new TargettedMessage("java.emailbaddomain",
-								new Object[] { userEid, messageLocator.getMessage("nonOfficialAccountSectionTitle")}, 
+								new Object[] { userEid, messageLocator.getMessage("add.nonofficial.title")}, 
 								TargettedMessage.SEVERITY_ERROR));
 					} else if (!isValidMail(userEid)) {
 						// must be a valid email address
