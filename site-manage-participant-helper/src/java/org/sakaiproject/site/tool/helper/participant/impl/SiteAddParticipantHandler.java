@@ -763,9 +763,9 @@ public class SiteAddParticipantHandler {
 					} else if (nonOfficialAccount != null
 							&& !isValidDomain(nonOfficialAccount)) {
 						// wrong string inside nonOfficialAccount id
-						targettedMessageList.addMessage(new TargettedMessage("java.emailaddress",
-		                new Object[] { nonOfficialAccount }, 
-		                TargettedMessage.SEVERITY_ERROR));
+						targettedMessageList.addMessage(new TargettedMessage("java.emailbaddomain",
+								new Object[] { nonOfficialAccount, messageLocator.getMessage("add.nonofficial.title")}, 
+								TargettedMessage.SEVERITY_ERROR));
 					} else {
 						try {
 							// if the nonOfficialAccount user already exists
