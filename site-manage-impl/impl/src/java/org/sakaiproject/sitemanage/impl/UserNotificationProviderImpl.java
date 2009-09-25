@@ -48,10 +48,12 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	public void setUserDirectoryService(UserDirectoryService uds) {
 		userDirectoryService = uds;
 	}
-	
-	/** portlet configuration parameter values* */
-	/** Resource bundle using current language locale */
-	private static ResourceLoader rb = new ResourceLoader("UserNotificationProvider");
+
+	/**
+	 * We can't use a standard static resource bundle as we need to use the locale of the user
+	 * receiving the message.
+	 */
+	private static final String RESOURCE_BUNDLE_NAME = "UserNotificationProvider";
 
 	public void init() {
 		//nothing realy to do
@@ -60,7 +62,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
 			User user, String siteTitle) {
-		rb = new ResourceLoader(user.getId(), "UserNotificationProvider");
+		ResourceLoader rb = new ResourceLoader(user.getId(), RESOURCE_BUNDLE_NAME);
 		
 		String from = getSetupRequestEmailAddress();
 		if (from != null) {
@@ -123,9 +125,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 
 	public void notifyNewUserEmail(User user, String newUserPassword,
 			String siteTitle) {
-		rb = new ResourceLoader("UserNotificationProvider");
-		// set the locale to individual receipient's setting
-		rb.setContextLocale(rb.getLocale(user.getId()));
+		ResourceLoader rb = new ResourceLoader(user.getId(), RESOURCE_BUNDLE_NAME);
 		
 		String from = getSetupRequestEmailAddress();
 		String productionSiteName = serverConfigurationService.getString(
