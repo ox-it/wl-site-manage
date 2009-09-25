@@ -33,8 +33,8 @@ import org.sakaiproject.util.ResourceLoader;
 public class UserNotificationProviderImpl implements UserNotificationProvider {
 	
 	private static Log M_log = LogFactory.getLog(UserNotificationProviderImpl.class);
-	private EmailService emailService; 
 	
+	private EmailService emailService;
 	public void setEmailService(EmailService es) {
 		emailService = es;
 	}
@@ -63,8 +63,9 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
 			User user, String siteTitle) {
 		ResourceLoader rb = new ResourceLoader(user.getId(), RESOURCE_BUNDLE_NAME);
-		
-		String from = getSetupRequestEmailAddress();
+		String from = (serverConfigurationService.getBoolean(UserNotificationProvider.NOTIFY_FROM_CURRENT_USER, false))?
+				getCurrentUserEmailAddress():getSetupRequestEmailAddress();
+
 		if (from != null) {
 			String productionSiteName = serverConfigurationService.getString(
 					"ui.service", "");
@@ -119,7 +120,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 			emailService.send(from, to, message_subject, content, headerTo,
 					replyTo, null);
 
-		} // if
+		}
 
 	}
 
@@ -166,6 +167,14 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	/*
 	 *  Private methods
 	 */
+	private String getCurrentUserEmailAddress() {
+		String email = userDirectoryService.getCurrentUser().getEmail();
+		if (email == null || email.length() == 0) {
+			email = getSetupRequestEmailAddress();
+		}
+		return email;
+	}
+	
 	
 	private String getSetupRequestEmailAddress() {
 		String from = serverConfigurationService.getString("setup.request",

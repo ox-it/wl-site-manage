@@ -137,7 +137,8 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
 			User user, String siteTitle) {
 		
-		String from = getSetupRequestEmailAddress();
+		String from = serverConfigurationService.getBoolean(NOTIFY_FROM_CURRENT_USER, false)?
+				getCurrentUserEmailAddress():getSetupRequestEmailAddress();
 		//we need to get the template
 		
 
@@ -263,6 +264,13 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		return from;
 	}
 
+	private String getCurrentUserEmailAddress() {
+		String email = userDirectoryService.getCurrentUser().getEmail();
+		if (email == null || email.length() == 0) {
+			email = getSetupRequestEmailAddress();
+		}
+		return email;
+	}
 
 
 	private void loadAddedParticipantMail() {
