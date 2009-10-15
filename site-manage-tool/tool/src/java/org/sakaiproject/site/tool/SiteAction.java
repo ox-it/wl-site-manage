@@ -196,8 +196,6 @@ public class SiteAction extends PagedResourceActionII {
 	private org.sakaiproject.sitemanage.api.AffiliatedSectionProvider affiliatedSectionProvider = (org.sakaiproject.sitemanage.api.AffiliatedSectionProvider) ComponentManager
 	.get(org.sakaiproject.sitemanage.api.AffiliatedSectionProvider.class);
 	
-	private ContentHostingService contentHostingService = (ContentHostingService) ComponentManager.get("org.sakaiproject.content.api.ContentHostingService");
-	
 	private static org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService questionService = (org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService) ComponentManager
 	.get(org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService.class);
 	
@@ -616,6 +614,9 @@ public class SiteAction extends PagedResourceActionII {
 	
 	// home tool id
 	private static final String TOOL_ID_HOME = "home";
+	// Site Info tool id
+	private static final String TOOL_ID_SITEINFO = "sakai.siteinfo";
+	
 	// synoptic tool ids
 	private static final String TOOL_ID_SUMMARY_CALENDAR = "sakai.summary.calendar";
 	private static final String TOOL_ID_SYNOPTIC_ANNOUNCEMENT = "sakai.synoptic.announcement";
@@ -631,16 +632,27 @@ public class SiteAction extends PagedResourceActionII {
 		SYNOPTIC_TOOL_ID_MAP.put(TOOL_ID_SYNOPTIC_CHAT, new ArrayList(Arrays.asList("sakai.chat")));
 		SYNOPTIC_TOOL_ID_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, new ArrayList(Arrays.asList("sakai.messages", "sakai.forums", "sakai.messagecenter")));
 	}
-	// Map of synoptic tool titles
+	
+	// map of synoptic tool and message bundle properties, used to lookup an internationalized tool title
 	private final static Map<String, String> SYNOPTIC_TOOL_TITLE_MAP;
 	static
 	{
 		SYNOPTIC_TOOL_TITLE_MAP = new HashMap<String, String>();
-		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SUMMARY_CALENDAR, rb.getString("java.reccal"));
-		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_ANNOUNCEMENT, rb.getString("java.recann"));
-		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_CHAT, rb.getString("java.recent"));
-		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, rb.getString("java.recmsg"));
+		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SUMMARY_CALENDAR, "java.reccal");
+		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_ANNOUNCEMENT, "java.recann");
+		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_CHAT, "java.recent");
+		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, "java.recmsg");
 	}
+	
+	/** the web content tool id **/
+	private final static String WEB_CONTENT_TOOL_ID = "sakai.iframe";
+	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG = "source";
+	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE = "http://www.sakaiproject.org/news-rss-feed";
+
+	/** the news tool **/
+	private final static String NEWS_TOOL_ID = "sakai.news";
+	private final static String NEWS_TOOL_CHANNEL_CONFIG = "channel-url";
+	private final static String NEWS_TOOL_CHANNEL_CONFIG_VALUE = "http://";
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -655,22 +667,22 @@ public class SiteAction extends PagedResourceActionII {
 	{
 		List<String> rv = new Vector<String>();
 		
-		// if this is an existing Home tool page, get all tool ids on that page
-		if (!newHomeTool)
-		{
-			// found home page, add all tool ids to return value
-			for(ToolConfiguration tConfiguration : (List<ToolConfiguration>) homePage.getTools())
-			{
-				rv.add(tConfiguration.getToolId());
-			}
+		// if this is a new Home tool page to be added, get the tool ids from definition (template site first, and then configurations)
+		Site site  = getStateSite(state);
+		
+		String siteType = site != null? site.getType() : "";
+		
+		// First: get the tool ids from configuration files
+		// initially by "wsetup.home.toolids" + site type, and if missing, use "wsetup.home.toolids"
+		if (ServerConfigurationService.getStrings("wsetup.home.toolids." + siteType) != null) {
+			rv = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.home.toolids.") + siteType));
+		} else if (ServerConfigurationService.getStrings("wsetup.home.toolids") != null) {
+			rv = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.home.toolids")));
 		}
-		else
+		
+		// Second: if tool list is empty, get it from the template site settings
+		if (rv.isEmpty())
 		{
-			// if this is a new Home tool page to be added, get the tool ids from definition (template site first, and then configurations)
-			Site site  = getStateSite(state);
-			
-			String siteType = site != null? site.getType() : "";
-			
 			// template site
 			Site templateSite = null;
 			String templateSiteId = "";
@@ -686,7 +698,7 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				catch (Throwable t)
 				{
-
+	
 					M_log.debug(this + ": getHomeToolIds cannot find site " + templateSiteId + t.getMessage());
 					// use the fall-back, user template site
 					try
@@ -738,7 +750,7 @@ public class SiteAction extends PagedResourceActionII {
 				{
 					String title = page.getTitle();
 					
-					if (isHomeTool(title))
+					if (isHomePage(page))
 					{
 						// found home page, add all tool ids to return value
 						for(ToolConfiguration tConfiguration : (List<ToolConfiguration>) page.getTools())
@@ -751,60 +763,66 @@ public class SiteAction extends PagedResourceActionII {
 					}
 				}
 			}
-			
-			// if the tool id list is still empty because we cannot find any template site yet
-			if (rv.isEmpty())
+		}
+		
+		// Third: if the tool id list is still empty because we cannot find any template site yet, use the default settings
+		if (rv.isEmpty())
+		{
+			if (siteType.equalsIgnoreCase("myworkspace"))
 			{
-				// first: get the tool ids from configuration files
-				if (ServerConfigurationService.getStrings("wsetup.home.toolids") != null) {
-					rv = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.home.toolids")));
-				}
+				// first try with MOTD tool
+				if (ToolManager.getTool("sakai.motd") != null)
+					rv.add("sakai.motd");
 				
-				// second, if there is no definition from configuration file, use the default setting
 				if (rv.isEmpty())
 				{
-					if (siteType.equalsIgnoreCase("myworkspace"))
-					{
-						// first try with MOTD tool
-						if (ToolManager.getTool("sakai.motd") != null)
-							rv.add("sakai.motd");
-						
-						if (rv.isEmpty())
-						{
-							// then try with the myworkspace information tool
-							if (ToolManager.getTool("sakai.iframe.myworkspace") != null)
-								rv.add("sakai.iframe.myworkspace");
-						}
-					}
-					else
-					{
-						// try the site information tool
-						if (ToolManager.getTool("sakai.iframe.site") != null)
-							rv.add("sakai.iframe.site");
-					}
-					
-					// synoptical tools
-					if (ToolManager.getTool(TOOL_ID_SUMMARY_CALENDAR) != null)
-					{
-						rv.add(TOOL_ID_SUMMARY_CALENDAR);
-					}
-					
-					if (ToolManager.getTool(TOOL_ID_SYNOPTIC_ANNOUNCEMENT) != null)
-					{
-						rv.add(TOOL_ID_SYNOPTIC_ANNOUNCEMENT);
-					}
-					
-					if (ToolManager.getTool(TOOL_ID_SYNOPTIC_CHAT) != null)
-					{
-						rv.add(TOOL_ID_SYNOPTIC_CHAT);
-					}
-					if (ToolManager.getTool(TOOL_ID_SYNOPTIC_MESSAGECENTER) != null)
-					{
-						rv.add(TOOL_ID_SYNOPTIC_MESSAGECENTER);
-					}
+					// then try with the myworkspace information tool
+					if (ToolManager.getTool("sakai.iframe.myworkspace") != null)
+						rv.add("sakai.iframe.myworkspace");
+				}
+			}
+			else
+			{
+				// try the site information tool
+				if (ToolManager.getTool("sakai.iframe.site") != null)
+					rv.add("sakai.iframe.site");
+			}
+			
+			// synoptical tools
+			if (ToolManager.getTool(TOOL_ID_SUMMARY_CALENDAR) != null)
+			{
+				rv.add(TOOL_ID_SUMMARY_CALENDAR);
+			}
+			
+			if (ToolManager.getTool(TOOL_ID_SYNOPTIC_ANNOUNCEMENT) != null)
+			{
+				rv.add(TOOL_ID_SYNOPTIC_ANNOUNCEMENT);
+			}
+			
+			if (ToolManager.getTool(TOOL_ID_SYNOPTIC_CHAT) != null)
+			{
+				rv.add(TOOL_ID_SYNOPTIC_CHAT);
+			}
+			if (ToolManager.getTool(TOOL_ID_SYNOPTIC_MESSAGECENTER) != null)
+			{
+				rv.add(TOOL_ID_SYNOPTIC_MESSAGECENTER);
+			}
+		}
+		
+		// Fourth: if this is an existing Home tool page, get any extra tool ids in the page already back to the list
+		if (!newHomeTool)
+		{
+			// found home page, add all tool ids to return value
+			for(ToolConfiguration tConfiguration : (List<ToolConfiguration>) homePage.getTools())
+			{
+				String hToolId = tConfiguration.getToolId();
+				if (!rv.contains(hToolId))
+				{
+					rv.add(hToolId);
 				}
 			}
 		}
+		
 		return rv;
 	}
 	
@@ -1592,9 +1610,9 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("myworkspace_site", new Boolean(myworkspace_site));
 			
 			context.put(STATE_TOOL_REGISTRATION_LIST, state.getAttribute(STATE_TOOL_REGISTRATION_LIST));
-			
-			// titles for multiple tool instances
-			context.put(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP ));
+
+			// all info related to multiple tools
+			multipleToolIntoContext(context, state);
 
 			// The Home tool checkbox needs special treatment to be selected
 			// by
@@ -2431,8 +2449,6 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("existingSite", Boolean.FALSE);
 				context.put("continue", "18");
 			}
-
-			context.put("function", "eventSubmit_doAdd_features");
 
 			context.put(STATE_TOOL_REGISTRATION_LIST, state
 					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
@@ -4461,35 +4477,39 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_INSTRUCTOR_SELECTED, userId);
 
 				String academicSessionEid = params.getString("selectTerm");
-				AcademicSession t = cms.getAcademicSession(academicSessionEid);
-				state.setAttribute(STATE_TERM_SELECTED, t);
-				if (t != null) {
-					List sections = prepareCourseAndSectionListing(userId, t
-							.getEid(), state);
-
-					isFutureTermSelected(state);
-
-					if (sections != null && sections.size() > 0) {
-						state.setAttribute(STATE_TERM_COURSE_LIST, sections);
-						state.setAttribute(STATE_TEMPLATE_INDEX, "36");
-						state.setAttribute(STATE_AUTO_ADD, Boolean.TRUE);
-					} else {
-						state.removeAttribute(STATE_TERM_COURSE_LIST);
-						
-						Boolean skipCourseSectionSelection = ServerConfigurationService.getBoolean("wsetup.skipCourseSectionSelection", Boolean.FALSE);
-						if (!skipCourseSectionSelection.booleanValue() && courseManagementIsImplemented())
-						{
-							state.setAttribute(STATE_TEMPLATE_INDEX, "53");
+				// check whether the academicsession might be null
+				if (academicSessionEid != null)
+				{
+					AcademicSession t = cms.getAcademicSession(academicSessionEid);
+					state.setAttribute(STATE_TERM_SELECTED, t);
+					if (t != null) {
+						List sections = prepareCourseAndSectionListing(userId, t
+								.getEid(), state);
+	
+						isFutureTermSelected(state);
+	
+						if (sections != null && sections.size() > 0) {
+							state.setAttribute(STATE_TERM_COURSE_LIST, sections);
+							state.setAttribute(STATE_TEMPLATE_INDEX, "36");
+							state.setAttribute(STATE_AUTO_ADD, Boolean.TRUE);
+						} else {
+							state.removeAttribute(STATE_TERM_COURSE_LIST);
+							
+							Boolean skipCourseSectionSelection = ServerConfigurationService.getBoolean("wsetup.skipCourseSectionSelection", Boolean.FALSE);
+							if (!skipCourseSectionSelection.booleanValue() && courseManagementIsImplemented())
+							{
+								state.setAttribute(STATE_TEMPLATE_INDEX, "53");
+							}
+							else
+							{
+								state.setAttribute(STATE_TEMPLATE_INDEX, "37");
+							}		
 						}
-						else
-						{
-							state.setAttribute(STATE_TEMPLATE_INDEX, "37");
-						}		
+	
+					} else { // not course type
+						state.setAttribute(STATE_TEMPLATE_INDEX, "37");
+						totalSteps = 5;
 					}
-
-				} else { // not course type
-					state.setAttribute(STATE_TEMPLATE_INDEX, "37");
-					totalSteps = 5;
 				}
 			} else if (type.equals("project")) {
 				totalSteps = 4;
@@ -4873,7 +4893,7 @@ public class SiteAction extends PagedResourceActionII {
 				addAlert(state, rb.getString("java.miss"));
 			} 
 			// valid input, adjust the add course number
-			state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER, new Integer(	validInputSites));
+			state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER, new Integer(	validInputSites>1?validInputSites:1));
 		}
 
 		// set state attributes
@@ -4938,7 +4958,7 @@ public class SiteAction extends PagedResourceActionII {
 		
 		// get the tool id set which allows for multiple instances
 		Set multipleToolIdSet = new HashSet();
-		Hashtable multipleToolConfiguration = new Hashtable<String, Hashtable<String, String>>();
+		HashMap multipleToolConfiguration = new HashMap<String, HashMap<String, String>>();
 		// get registered tools list
 		Set categories = new HashSet();
 		categories.add(type);
@@ -4972,7 +4992,7 @@ public class SiteAction extends PagedResourceActionII {
 				multipleToolIdSet.add(tr.getId());
 				
 				// get the configuration for multiple instance
-				Hashtable<String, String> toolConfigurations = getMultiToolConfiguration(originalToolId);
+				HashMap<String, String> toolConfigurations = getMultiToolConfiguration(originalToolId, null);
 				multipleToolConfiguration.put(tr.getId(), toolConfigurations);
 			}
 		}
@@ -5846,6 +5866,9 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		
 		resetVisitedTemplateListToIndex(state, (String) state.getAttribute(STATE_TEMPLATE_INDEX));
+		
+		// remove state variables in tool editing
+		removeEditToolState(state);
 
 	} // doCancel_create
 
@@ -6022,13 +6045,13 @@ public class SiteAction extends PagedResourceActionII {
 		ParameterParser params = data.getParameters();
 		if ((params.getString("name")) == null
 				|| (params.getString("url") == null)) {
-			Tool tr = ToolManager.getTool("sakai.iframe");
+			Tool tr = ToolManager.getTool(WEB_CONTENT_TOOL_ID);
 			Site site = getStateSite(state);
 			SitePage page = site.addPage();
 			page.setTitle(params.getString("name")); // the visible label on
 			// the tool menu
 			ToolConfiguration tool = page.addTool();
-			tool.setTool("sakai.iframe", tr);
+			tool.setTool(WEB_CONTENT_TOOL_ID, tr);
 			tool.setTitle(params.getString("name"));
 			commitSite(site);
 		} else {
@@ -6116,10 +6139,10 @@ public class SiteAction extends PagedResourceActionII {
 		return false;
 	}
 	
-	private Hashtable<String, String> getMultiToolConfiguration(String toolId)
+	private HashMap<String, String> getMultiToolConfiguration(String toolId, ToolConfiguration toolConfig)
 	{
-		Hashtable<String, String> rv = new Hashtable<String, String>();
-		
+		HashMap<String, String> rv = new HashMap<String, String>();
+	
 		// read from configuration file
 		ArrayList<String> attributes=new ArrayList<String>();
 		String attributesConfig = ServerConfigurationService.getString(CONFIG_TOOL_ATTRIBUTE + toolId);
@@ -6129,19 +6152,20 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		else
 		{
-			if (toolId.equals("sakai.news"))
+			if (toolId.equals(NEWS_TOOL_ID))
 			{
 				// default setting for News tool
-				attributes.add("channel-url");
+				attributes.add(NEWS_TOOL_CHANNEL_CONFIG);
 			}
-			else if (toolId.equals("sakai.iframe"))
+			else if (toolId.equals(WEB_CONTENT_TOOL_ID))
 			{
 				// default setting for Web Content tool
-				attributes.add("source");
+				attributes.add(WEB_CONTENT_TOOL_SOURCE_CONFIG);
 			}
 		}
 		
 		ArrayList<String> defaultValues =new ArrayList<String>();
+		
 		String defaultValueConfig = ServerConfigurationService.getString(CONFIG_TOOL_ATTRIBUTE_DEFAULT + toolId);
 		if ( defaultValueConfig != null && defaultValueConfig.length() > 0)
 		{
@@ -6149,18 +6173,32 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		else
 		{
-			if (toolId.equals("sakai.news"))
+			if (toolId.equals(NEWS_TOOL_ID))
 			{
-				// default value
-				defaultValues.add("http://www.sakaiproject.org/news-rss-feed");
+				if (toolConfig != null && toolConfig.getConfig() != null && toolConfig.getConfig().containsKey(NEWS_TOOL_CHANNEL_CONFIG))
+				{
+					defaultValues.add(toolConfig.getConfig().getProperty(NEWS_TOOL_CHANNEL_CONFIG));
+				}
+				else
+				{
+					// default value
+					defaultValues.add(WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE);
+				}
 			}
-			else if (toolId.equals("sakai.iframe"))
+			else if (toolId.equals(WEB_CONTENT_TOOL_ID))
 			{
-				// default setting for Web Content tool
-				defaultValues.add("http://");
+				if (toolConfig != null && toolConfig.getConfig() != null && toolConfig.getConfig().containsKey(WEB_CONTENT_TOOL_SOURCE_CONFIG))
+				{
+					defaultValues.add(toolConfig.getConfig().getProperty(WEB_CONTENT_TOOL_SOURCE_CONFIG));
+				}
+				else
+				{
+					// default value
+					defaultValues.add(NEWS_TOOL_CHANNEL_CONFIG_VALUE);
+				}
 			}
 		}
-		
+			
 		if (attributes != null && attributes.size() > 0)
 		{
 			for (int i = 0; i<attributes.size();i++)
@@ -6168,6 +6206,7 @@ public class SiteAction extends PagedResourceActionII {
 				rv.put(attributes.get(i), defaultValues.get(i));
 			}
 		}
+		
 		return rv;
 	}
 	
@@ -6573,6 +6612,12 @@ public class SiteAction extends PagedResourceActionII {
 
 		if (SITE_MODE_SITESETUP.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+			// need to watch out for the config question.xml existence.
+			// read the file and put it to backup folder.
+			if (SiteSetupQuestionFileParser.isConfigurationXmlAvailable())
+			{
+				SiteSetupQuestionFileParser.updateConfig();
+			}
 		} else if (SITE_MODE_HELPER.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "1");
 			if (canChooseAdminSite(data, state)) {
@@ -6594,13 +6639,6 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		}
 
-		
-		// need to watch out for the config question.xml existence.
-		// read the file and put it to backup folder.
-		if (SiteSetupQuestionFileParser.isConfigurationXmlAvailable())
-		{
-			SiteSetupQuestionFileParser.updateConfig();
-		}
 		
 		// show UI for adding non-official participant(s) or not
 		// if nonOfficialAccount variable is set to be false inside sakai.properties file, do not show the UI section for adding them.
@@ -8530,6 +8568,7 @@ public class SiteAction extends PagedResourceActionII {
 		// declare some flags used in making decisions about Home, whether to
 		// add, remove, or do nothing
 		boolean hasHome = false;
+		String homePageId = null;
 		boolean homeInWSetupPageList = false;
 
 		List chosenList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
@@ -8599,7 +8638,7 @@ public class SiteAction extends PagedResourceActionII {
 						}
 					}
 				}
-			}else if (choice.equals("sakai.siteinfo")) {
+			}else if (choice.equals(TOOL_ID_SITEINFO)) {
 				hasSiteInfo = true;
 			}
 			
@@ -8607,10 +8646,9 @@ public class SiteAction extends PagedResourceActionII {
 
 		// see if Home and/or Help in the wSetupPageList (can just check title
 		// here, because we checked patterns before adding to the list)
-		String homePageId = null;
 		for (ListIterator i = wSetupPageList.listIterator(); i.hasNext();) {
 			wSetupPage = (WorksiteSetupPage) i.next();
-			if (isHomeTool(wSetupPage.getPageTitle())) {
+			if (isHomePage(site.getPage(wSetupPage.getPageId()))) {
 				homeInWSetupPageList = true;
 				homePageId = wSetupPage.getPageId();
 				break;
@@ -8684,7 +8722,9 @@ public class SiteAction extends PagedResourceActionII {
 					{
 						try
 						{
-							addSynopticTool(page, homeToolId, SYNOPTIC_TOOL_TITLE_MAP.get(homeToolId), synopticToolIndex++ + ",1");
+							// use value from map to find an internationalized tool title
+							String toolTitleText = rb.getString(SYNOPTIC_TOOL_TITLE_MAP.get(homeToolId));
+							addSynopticTool(page, homeToolId, toolTitleText, synopticToolIndex++ + ",1");
 						} catch (Exception e) {
 							M_log.warn(this + ".saveFeatures addSynotpicTool: " + e.getMessage() + " site id = " + site.getId() + " tool = " + homeToolId, e);
 						}
@@ -8698,23 +8738,29 @@ public class SiteAction extends PagedResourceActionII {
 				// only use one column layout
 				page.setLayout(SitePage.LAYOUT_SINGLE_COL);
 			}
+			
+			// mark this page as Home page inside its property
+			if (page.getProperties().getProperty(SiteConstants.IS_HOME_PAGE) == null)
+			{
+				page.getPropertiesEdit().addProperty(SiteConstants.IS_HOME_PAGE, Boolean.TRUE.toString());
+			}
+			
 		} // add Home
 
 		// if Home is in wSetupPageList and not chosen, remove Home feature from
 		// wSetupPageList and site
 		if (!hasHome && homeInWSetupPageList) {
 			// remove Home from wSetupPageList
-			WorksiteSetupPage removePage = new WorksiteSetupPage();
 			for (ListIterator i = wSetupPageList.listIterator(); i.hasNext();) {
 				WorksiteSetupPage comparePage = (WorksiteSetupPage) i.next();
-				if (comparePage.getToolId().equals(TOOL_ID_HOME)) {
-					removePage = comparePage;
+				SitePage sitePage = site.getPage(comparePage.getPageId());
+				if (sitePage != null && isHomePage(sitePage)) {
+					// remove the Home page
+					site.removePage(sitePage);
+					wSetupPageList.remove(comparePage);
+					break;
 				}
 			}
-			SitePage siteHome = site.getPage(removePage.getPageId());
-			site.removePage(siteHome);
-			wSetupPageList.remove(removePage);
-
 		}
 
 		// declare flags used in making decisions about whether to add, remove,
@@ -8746,7 +8792,8 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 
-			if (!inChosenList) {
+			// exclude the Home page if there is any
+			if (!inChosenList && !(homePageId != null && wSetupPage.getPageId().equals(homePageId))) {
 				removePageIds.add(wSetupPage.getPageId());
 			}
 		}
@@ -8773,6 +8820,9 @@ public class SiteAction extends PagedResourceActionII {
 				(String) state.getAttribute(STATE_SITE_TYPE), chosenList)
 				.listIterator(); j.hasNext();) {
 			String toolId = (String) j.next();
+			// exclude Home tool
+			if (!toolId.equals(TOOL_ID_HOME))
+			{
 			// Is the tool in the wSetupPageList?
 			inWSetupPageList = false;
 			for (ListIterator k = wSetupPageList.listIterator(); k.hasNext();) {
@@ -8866,6 +8916,7 @@ public class SiteAction extends PagedResourceActionII {
 					}
 				}
 			}
+			}
 		} // for
 
 		// reorder Home and Site Info only if the site has not been customized order before
@@ -8880,7 +8931,7 @@ public class SiteAction extends PagedResourceActionII {
 				if (pageList != null && pageList.size() != 0) {
 					for (ListIterator i = pageList.listIterator(); i.hasNext();) {
 						SitePage page = (SitePage) i.next();
-						if (isHomeTool(page.getTitle()))
+						if (isHomePage(page))
 						{
 							homePage = page;
 							break;
@@ -8900,7 +8951,7 @@ public class SiteAction extends PagedResourceActionII {
 			if (hasSiteInfo) {
 				SitePage siteInfoPage = null;
 				pageList = site.getPages();
-				String[] toolIds = { "sakai.siteinfo" };
+				String[] toolIds = { TOOL_ID_SITEINFO };
 				if (pageList != null && pageList.size() != 0) {
 					for (ListIterator i = pageList.listIterator(); siteInfoPage == null
 							&& i.hasNext();) {
@@ -8941,10 +8992,10 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	private void saveMultipleToolConfiguration(SessionState state, ToolConfiguration tool, String toolId) {
 		// get the configuration of multiple tool instance
-		Hashtable<String, Hashtable<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(Hashtable<String, Hashtable<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new Hashtable<String, Hashtable<String, String>>();
+		HashMap<String, HashMap<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(HashMap<String, HashMap<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap<String, HashMap<String, String>>();
 		
 		// set tool attributes
-		Hashtable<String, String> attributes = multipleToolConfiguration.get(toolId);
+		HashMap<String, String> attributes = multipleToolConfiguration.get(toolId);
 		
 		if (attributes != null)
 		{
@@ -9545,7 +9596,9 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param page
 	 * @return
 	 */
-	private String pageMatchesPattern(SessionState state, SitePage page) {
+	private List<String> pageMatchesPattern(SessionState state, SitePage page) {
+		List<String> rv = new Vector<String>();
+		
 		List pageToolList = page.getTools();
 
 		// if no tools on the page, return false
@@ -9558,10 +9611,32 @@ public class SiteAction extends PagedResourceActionII {
 		int count = pageToolList.size();
 		
 		// check Home tool first
-		if (isHomeTool(page.getTitle()))
-			return TOOL_ID_HOME;
+		if (isHomePage(page))
+		{
+			rv.add(TOOL_ID_HOME);
+			rv.add(TOOL_ID_HOME);
+			return rv;
+		}
+		
+		// check whether the page has Site Info tool
+		boolean foundSiteInfoTool = false;
+		for (int i = 0; i < count; i++)
+		{
+			ToolConfiguration toolConfiguration = (ToolConfiguration) pageToolList.get(i);
+			if (toolConfiguration.getToolId().equals(TOOL_ID_SITEINFO))
+			{
+				foundSiteInfoTool = true;
+				break;
+			}
+		}
+		if (foundSiteInfoTool)
+		{
+			rv.add(TOOL_ID_SITEINFO);
+			rv.add(TOOL_ID_SITEINFO);
+			return rv;
+		}
 
-		// Other than Home page, no other page is allowed to have more than one tool within. Otherwise, WSetup/Site Info tool won't handle it
+		// Other than Home, Site Info page, no other page is allowed to have more than one tool within. Otherwise, WSetup/Site Info tool won't handle it
 		if (count != 1)
 		{
 			return null;
@@ -9587,14 +9662,21 @@ public class SiteAction extends PagedResourceActionII {
 								&& toolConfiguration.getTool().getId().indexOf(
 										tool.getId()) != -1) {
 							match = tool.getId();
+							rv.add(match);
+							rv.add(toolConfiguration.getId());
+							
 						}
 					}
 				}
-				return match;
+				// no tool registeration is found (tool is not editable within Site Info tool), set return value to be null
+				if (match == null)
+				{
+					rv = null;
+				}
 			}
 		}
 		
-		return null;
+		return rv;
 
 	} // pageMatchesPattern
 
@@ -9625,8 +9707,10 @@ public class SiteAction extends PagedResourceActionII {
 	private void siteToolsIntoState(SessionState state) {
 		// get the map of titles of multiple tool instances
 		Map multipleToolIdTitleMap = state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP) != null? (Map) state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP):new HashMap();
+		Map<String, Map<String, String>> multipleToolIdAttributeMap = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null? (Map<String, Map<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap();
 		
 		String wSetupTool = NULL_STRING;
+		String wSetupToolId = NULL_STRING;
 		List wSetupPageList = new Vector();
 		Site site = getStateSite(state);
 		List pageList = site.getPages();
@@ -9641,6 +9725,8 @@ public class SiteAction extends PagedResourceActionII {
 		
 		// set tool registration list
 		setToolRegistrationList(state, type);
+		multipleToolIdAttributeMap = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null? (Map<String, Map<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap();
+		
 		List toolRegList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);
 		
 		// for the selected tools
@@ -9648,11 +9734,20 @@ public class SiteAction extends PagedResourceActionII {
 		Vector idSelected = new Vector();
 		if (!((pageList == null) || (pageList.size() == 0))) {
 			for (ListIterator i = pageList.listIterator(); i.hasNext();) {
+				// reset
+				wSetupTool = null;
+				wSetupToolId = null;
+				
 				SitePage page = (SitePage) i.next();
 				// collect the pages consistent with Worksite Setup patterns
-				wSetupTool = pageMatchesPattern(state, page);
+				List<String> pmList = pageMatchesPattern(state, page);
+				if (pmList != null)
+				{
+					wSetupTool = pmList.get(0);
+					wSetupToolId = pmList.get(1);
+				}
 				if (wSetupTool != null) {
-					if (isHomeTool(page.getTitle()))
+					if (isHomePage(page))
 					{
 						check_home = true;
 					}
@@ -9663,7 +9758,11 @@ public class SiteAction extends PagedResourceActionII {
 							String mId = page.getId() + wSetupTool;
 							idSelected.add(mId);
 							multipleToolIdTitleMap.put(mId, page.getTitle());
-
+							
+							// get the configuration for multiple instance
+							HashMap<String, String> toolConfigurations = getMultiToolConfiguration(wSetupTool, page.getTool(wSetupToolId));
+							multipleToolIdAttributeMap.put(mId, toolConfigurations);
+							
 							MyTool newTool = new MyTool();
 							newTool.title = ToolManager.getTool(wSetupTool).getTitle();
 							newTool.id = mId;
@@ -9700,9 +9799,11 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		
 		state.setAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, multipleToolIdTitleMap);
+		state.setAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION, multipleToolIdAttributeMap);
 		state.setAttribute(STATE_TOOL_HOME_SELECTED, new Boolean(check_home));
 		state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, idSelected); // List
 		state.setAttribute(STATE_TOOL_REGISTRATION_LIST, toolRegList);
+
 		// of
 		// ToolRegistration
 		// toolId's
@@ -9750,7 +9851,10 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_HOME);
 		state.removeAttribute(STATE_WORKSITE_SETUP_PAGE_LIST);
 		state.removeAttribute(STATE_MULTIPLE_TOOL_ID_SET);
-		//state.removeAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP);
+		state.removeAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP);
+		state.removeAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION);
+		state.removeAttribute(STATE_TOOL_REGISTRATION_LIST);
+		state.removeAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 	}
 
 	private List orderToolIds(SessionState state, String type, List toolIdList) {
@@ -9924,8 +10028,8 @@ public class SiteAction extends PagedResourceActionII {
 				Tool tool = ToolManager.getTool(originToolId);
 				if (tool != null)
 				{
-					removeTool(state, removeToolId);
 					updateSelectedToolList(state, params, false);
+					removeTool(state, removeToolId, originToolId);
 					state.setAttribute(STATE_TEMPLATE_INDEX, "26");
 				}
 			}
@@ -9944,9 +10048,12 @@ public class SiteAction extends PagedResourceActionII {
 			} else {
 				state.removeAttribute(STATE_IMPORT);
 			}
+		} else if (option.equalsIgnoreCase("continueENW")) {
+			// continue in multiple tools page
+			updateSelectedToolList(state, params, false);
+			doContinue(data);
 		} else if (option.equalsIgnoreCase("continue")) {
 			// continue
-			updateSelectedToolList(state, params, false);
 			doContinue(data);
 		} else if (option.equalsIgnoreCase("back")) {
 			// back
@@ -9979,10 +10086,10 @@ public class SiteAction extends PagedResourceActionII {
 				.getStrings("selectedTools")));
 		Set multipleToolIdSet = (Set) state.getAttribute(STATE_MULTIPLE_TOOL_ID_SET);
 		Map multipleToolIdTitleMap = state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP) != null? (Map) state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP):new HashMap();
-		Hashtable<String, Hashtable<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(Hashtable<String, Hashtable<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new Hashtable<String, Hashtable<String, String>>();
+		HashMap<String, HashMap<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(HashMap<String, HashMap<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap<String, HashMap<String, String>>();
 		Vector<String> idSelected = (Vector<String>) state.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_LIST);
 		boolean has_home = false;
-		String emailId = null;
+		String emailId = state.getAttribute(STATE_TOOL_EMAIL_ADDRESS) != null?(String) state.getAttribute(STATE_TOOL_EMAIL_ADDRESS):null;
 
 		for (int i = 0; i < selectedTools.size(); i++) 
 		{
@@ -9990,9 +10097,11 @@ public class SiteAction extends PagedResourceActionII {
 			if (id.equalsIgnoreCase(TOOL_ID_HOME)) {
 				has_home = true;
 			} else if (id.equalsIgnoreCase("sakai.mailbox")) {
+				// read email id
+				emailId = StringUtil.trimToNull(params.getString("emailId"));
+				state.setAttribute(STATE_TOOL_EMAIL_ADDRESS, emailId);
 				if ( updateConfigVariables ) {
 					// if Email archive tool is selected, check the email alias
-					emailId = StringUtil.trimToNull(params.getString("emailId"));
 					String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
 					String channelReference = mailArchiveChannelReference(siteId);
 					if (emailId == null) {
@@ -10022,14 +10131,12 @@ public class SiteAction extends PagedResourceActionII {
 							}
 						}
 					}
-
-					state.setAttribute(STATE_TOOL_EMAIL_ADDRESS, emailId);
 				}
 			}
-			else if (isMultipleInstancesAllowed(findOriginalToolId(state, id)) && (idSelected != null && !idSelected.contains(id) || idSelected == null) && updateConfigVariables)
+			else if (isMultipleInstancesAllowed(findOriginalToolId(state, id)) && (idSelected != null && !idSelected.contains(id) || idSelected == null))
 			{
 				// newly added mutliple instances
-				String title = StringUtil.trimToNull(params.getString("title_" + id));
+				String title = StringUtil.trimToNull(Validator.escapeHtml(params.getString("title_" + id)));
 				if (title != null) 
 				{
 					// save the titles entered
@@ -10037,7 +10144,7 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				
 				// get the attribute input
-				Hashtable<String, String> attributes = multipleToolConfiguration.get(id);
+				HashMap<String, String> attributes = multipleToolConfiguration.get(id);
 				if (attributes == null)
 				{
 					// if missing, get the default setting for original id
@@ -10046,10 +10153,10 @@ public class SiteAction extends PagedResourceActionII {
 				
 				if (attributes != null)
 				{
-					for(Enumeration<String> e = attributes.keys(); e.hasMoreElements();)
+					for(Iterator<String> e = attributes.keySet().iterator(); e.hasNext();)
 					{
-						String attribute = e.nextElement();
-						String attributeInput = StringUtil.trimToNull(params.getString(attribute + "_" + id));
+						String attribute = e.next();
+						String attributeInput = StringUtil.trimToNull(Validator.escapeHtml(params.getString(attribute + "_" + id)));
 						if (attributeInput != null)
 						{
 							// save the attribute input
@@ -10058,13 +10165,12 @@ public class SiteAction extends PagedResourceActionII {
 					}
 					multipleToolConfiguration.put(id, attributes);
 				}
-
-				// update the state objects
-				state.setAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, multipleToolIdTitleMap);
-				state.setAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION, multipleToolConfiguration);
 			}
 		}
-		
+
+		// update the state objects
+		state.setAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, multipleToolIdTitleMap);
+		state.setAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION, multipleToolConfiguration);
 		state.setAttribute(STATE_TOOL_HOME_SELECTED, new Boolean(has_home));
 	} // updateSelectedToolList
 
@@ -10084,7 +10190,7 @@ public class SiteAction extends PagedResourceActionII {
 		// get the map of titles of multiple tool instances
 		Map multipleToolIdTitleMap = state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP) != null? (Map) state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP):new HashMap();
 		// get the attributes of multiple tool instances
-		Hashtable<String, Hashtable<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(Hashtable<String, Hashtable<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new Hashtable<String, Hashtable<String, String>>();
+		HashMap<String, HashMap<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(HashMap<String, HashMap<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap<String, HashMap<String, String>>();
 		
 		int toolListedTimes = 0;
 		
@@ -10134,19 +10240,12 @@ public class SiteAction extends PagedResourceActionII {
 			multipleToolIdTitleMap.put(newTool.id, defaultTitle);
 			
 			// get the attribute input
-			Hashtable<String, String> attributes = multipleToolConfiguration.get(newToolId);
+			HashMap<String, String> attributes = multipleToolConfiguration.get(newToolId);
 			if (attributes == null)
 			{
 				// if missing, get the default setting for original id
-				attributes = new Hashtable<String, String>();
-				
-				Hashtable<String, String> oAttributes = multipleToolConfiguration.get(findOriginalToolId(state, newToolId));
-				// add the entry for the newly added tool
-				if (attributes != null)
-				{
-					attributes = (Hashtable<String, String>) oAttributes.clone();
-					multipleToolConfiguration.put(newToolId, attributes);
-				}
+				attributes = getMultiToolConfiguration(toolId, null);
+				multipleToolConfiguration.put(newToolId, attributes);
 			}
 		}
 
@@ -10161,22 +10260,37 @@ public class SiteAction extends PagedResourceActionII {
 	 * find the tool in the tool list and remove the tool instance
 	 * @param state
 	 * @param toolId
+	 * @param originalToolId
 	 */
-	private void removeTool(SessionState state, String toolId) {
+	private void removeTool(SessionState state, String toolId, String originalToolId) {
+		List toolList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);
 		// get the map of titles of multiple tool instances
 		Map multipleToolIdTitleMap = state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP) != null? (Map) state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP):new HashMap();
 		// get the attributes of multiple tool instances
-		Hashtable<String, Hashtable<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(Hashtable<String, Hashtable<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new Hashtable<String, Hashtable<String, String>>();
+		HashMap<String, HashMap<String, String>> multipleToolConfiguration = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null?(HashMap<String, HashMap<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap<String, HashMap<String, String>>();
 		// the selected tool list
 		List toolSelected = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 
 		// remove the tool from related state variables
 		toolSelected.remove(toolId);
+		// remove the tool from the title map
 		multipleToolIdTitleMap.remove(toolId);
+		// remove the tool from the configuration map
+		boolean found = false;
+		for (ListIterator i = toolList.listIterator(); i.hasNext() && !found;) 
+		{
+			MyTool tool = (MyTool) i.next();
+			if (tool.getId().equals(toolId)) 
+			{
+				toolList.remove(tool);
+				found = true;
+			}
+		}
 		multipleToolConfiguration.remove(toolId);
 
 		state.setAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, multipleToolIdTitleMap);
 		state.setAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION, multipleToolConfiguration);
+		state.setAttribute(STATE_TOOL_REGISTRATION_LIST, toolList);
 		state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, toolSelected);
 
 	} // removeTool
@@ -10210,9 +10324,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		state.setAttribute(STATE_SELECTED_PARTICIPANT_ROLES,
 				selectedParticipantRoles);
-		state
-				.setAttribute(STATE_SELECTED_PARTICIPANTS,
-						selectedParticipantList);
+		state.setAttribute(STATE_SELECTED_PARTICIPANTS, selectedParticipantList);
 
 	} // setSelectedParticipantRol3es
 
@@ -10735,16 +10847,16 @@ public class SiteAction extends PagedResourceActionII {
 		Iterator sitesIter = importSites.iterator();
 		while (sitesIter.hasNext()) {
 			Site site = (Site) sitesIter.next();
-			if (site.getToolForCommonId("sakai.iframe") != null)
+			if (site.getToolForCommonId(WEB_CONTENT_TOOL_ID) != null)
 				displayWebContent = true;
-			if (site.getToolForCommonId("sakai.news") != null)
+			if (site.getToolForCommonId(NEWS_TOOL_ID) != null)
 				displayNews = true;
 		}
 		
-		if (displayWebContent && !toolIdList.contains("sakai.iframe"))
-			toolIdList.add("sakai.iframe");
-		if (displayNews && !toolIdList.contains("sakai.news"))
-			toolIdList.add("sakai.news");
+		if (displayWebContent && !toolIdList.contains(WEB_CONTENT_TOOL_ID))
+			toolIdList.add(WEB_CONTENT_TOOL_ID);
+		if (displayNews && !toolIdList.contains(NEWS_TOOL_ID))
+			toolIdList.add(NEWS_TOOL_ID);
 
 		return toolIdList;
 	} // getToolsAvailableForImport
@@ -11403,33 +11515,33 @@ public class SiteAction extends PagedResourceActionII {
 	}
 
 	private void prepFindPage(SessionState state) {
-		final List cmLevels = getCMLevelLabels(), selections = (List) state
-				.getAttribute(STATE_CM_LEVEL_SELECTIONS);
-		int lvlSz = 0;
-
-		if (cmLevels == null || (lvlSz = cmLevels.size()) < 1) {
-			// TODO: no cm levels configured, redirect to manual add
-			return;
-		}
-
-		if (selections != null && selections.size() == lvlSz) {
-			Section sect = cms.getSection((String) selections.get(selections
-					.size() - 1));
-			SectionObject so = new SectionObject(sect);
-
-			state.setAttribute(STATE_CM_SELECTED_SECTION, so);
-		} else
-			state.removeAttribute(STATE_CM_SELECTED_SECTION);
-
-		state.setAttribute(STATE_CM_LEVELS, cmLevels);
-		state.setAttribute(STATE_CM_LEVEL_SELECTIONS, selections);
-
 		// check the configuration setting for choosing next screen
 		Boolean skipCourseSectionSelection = ServerConfigurationService.getBoolean("wsetup.skipCourseSectionSelection", Boolean.FALSE);
 		if (!skipCourseSectionSelection.booleanValue())
 		{
 			// go to the course/section selection page
 			state.setAttribute(STATE_TEMPLATE_INDEX, "53");
+			
+			// get cm levels
+			final List cmLevels = getCMLevelLabels(), selections = (List) state.getAttribute(STATE_CM_LEVEL_SELECTIONS);
+			int lvlSz = 0;
+		
+			if (cmLevels == null || (lvlSz = cmLevels.size()) < 1) {
+				// TODO: no cm levels configured, redirect to manual add
+				return;
+			}
+		
+			if (selections != null && selections.size() == lvlSz) {
+				Section sect = cms.getSection((String) selections.get(selections
+						.size() - 1));
+				SectionObject so = new SectionObject(sect);
+		
+				state.setAttribute(STATE_CM_SELECTED_SECTION, so);
+			} else
+				state.removeAttribute(STATE_CM_SELECTED_SECTION);
+		
+			state.setAttribute(STATE_CM_LEVELS, cmLevels);
+			state.setAttribute(STATE_CM_LEVEL_SELECTIONS, selections);
 		}
 		else
 		{
@@ -11758,9 +11870,19 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param toolTitle
 	 * @return
 	 */
-	private boolean isHomeTool(String toolTitle)
+	private boolean isHomePage(SitePage page)
 	{
-		return TOOL_ID_HOME.equalsIgnoreCase(toolTitle) || rb.getString("java.home").equalsIgnoreCase(toolTitle);
+		if (page.getProperties().getProperty(SiteConstants.IS_HOME_PAGE) != null)
+		{
+			// check based on the page property first
+			return true;
+		}
+		else
+		{
+			// if above fails, check based on the page title
+			String pageTitle = page.getTitle();
+			return TOOL_ID_HOME.equalsIgnoreCase(pageTitle) || rb.getString("java.home").equalsIgnoreCase(pageTitle);
+		}
 	}
 
 	public boolean displaySiteAlias() {

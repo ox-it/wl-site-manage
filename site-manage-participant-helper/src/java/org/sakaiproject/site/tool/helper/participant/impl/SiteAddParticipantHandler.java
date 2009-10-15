@@ -153,6 +153,8 @@ public class SiteAddParticipantHandler {
 	public List<Role> roles = new Vector<Role>();
 	public List<Role> getRoles()
 	{
+		if (roles.isEmpty())
+			init();
 		return roles;
 	}
 	public void setRoles (List<Role> roles)
@@ -200,7 +202,6 @@ public class SiteAddParticipantHandler {
      */
     public void init() {
         if (site == null) {
-            siteId = null;
             try {
                 siteId = sessionManager.getCurrentToolSession()
                         .getAttribute(HELPER_ID + ".siteId").toString();
@@ -240,6 +241,10 @@ public class SiteAddParticipantHandler {
     public String getSiteTitle()
     {
     	String rv = "";
+    	
+    	if (site == null)
+    		init();
+    	
     	if (site != null)
     	{
     		rv = site.getTitle();
@@ -256,6 +261,8 @@ public class SiteAddParticipantHandler {
     {
     	boolean rv = false;
 		String courseSiteType = getServerConfigurationString("courseSiteType", "course");
+		if (site == null)
+    		init();
 		if (site != null && courseSiteType.equals(site.getType()))
 		{
 			rv = true;
@@ -322,7 +329,7 @@ public class SiteAddParticipantHandler {
     
     private void resetTargettedMessageList()
     {
-    	targettedMessageList = new TargettedMessageList();
+    	targettedMessageList.clear();
     }
     
     private void resetUserRolesEntries()
@@ -335,10 +342,10 @@ public class SiteAddParticipantHandler {
      * @return
      */
     public String processSameRoleContinue() {
-
+    	targettedMessageList.clear();
     	if (sameRoleChoice == null)
     	{
-    		targettedMessageList.addMessage(new TargettedMessage("java.pleasechoose", null, TargettedMessage.SEVERITY_INFO));
+    		targettedMessageList.addMessage(new TargettedMessage("java.pleasechoose", null, TargettedMessage.SEVERITY_ERROR));
     		return null;
     	}
     	else
@@ -347,6 +354,8 @@ public class SiteAddParticipantHandler {
 
 	        // if user doesn't have full rights, don't let him add one with site update
 	    	if (!authzGroupService.allowUpdate("/site/" + siteId)) {
+	    	if (realm == null)
+	    		init();
 		    Role r = realm.getRole(sameRoleChoice);
 		    if (r != null && r.isAllowed("site.upd")) {
 			targettedMessageList.addMessage(new TargettedMessage("java.roleperm", new Object[] { sameRoleChoice }, TargettedMessage.SEVERITY_ERROR));
@@ -412,6 +421,7 @@ public class SiteAddParticipantHandler {
      */
     public String processEmailNotiContinue() {
 
+    	resetTargettedMessageList();
         return "continue";
     }
     
@@ -450,6 +460,8 @@ public class SiteAddParticipantHandler {
 		List<String> addedUserEIds = new Vector<String>();
 
 		if (userRoleEntries != null && !userRoleEntries.isEmpty()) {
+			if (site == null)
+				init();
 			if (site != null) {
 				// get realm object
 				String realmId = site.getReference();
@@ -526,9 +538,10 @@ public class SiteAddParticipantHandler {
      * @return
      */
     public String processConfirmContinue() {
-
     	Hashtable<String, String> eIdRoles = new Hashtable<String, String>();
-    	
+    	resetTargettedMessageList();
+    	if (site == null)
+    		init();
     	for (UserRoleEntry entry:userRoleEntries) {
 			String eId = entry.userEId;
 
@@ -642,6 +655,8 @@ public class SiteAddParticipantHandler {
     private void checkAddParticipant() {
 		// get the participants to be added
 		int i;
+		if (site == null)
+    		init();
 		HashSet<String> existingUsers = new HashSet<String>();
 
 		// accept officialAccounts and/or nonOfficialAccount account names
@@ -837,8 +852,8 @@ public class SiteAddParticipantHandler {
 				count++;
 			}
 
-			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.1", new Object[]{accounts}, TargettedMessage.SEVERITY_INFO));
-			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.2", null, TargettedMessage.SEVERITY_INFO));
+			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.1", new Object[]{accounts}, TargettedMessage.SEVERITY_ERROR));
+			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.2", null, TargettedMessage.SEVERITY_ERROR));
 		}
 
 		return;
@@ -903,6 +918,10 @@ public class SiteAddParticipantHandler {
 	
 	private void reset()
 	{
+		site = null;
+		siteId = null;
+		realm = null;
+		roles.clear();
 		officialAccountParticipant = null;
 		nonOfficialAccountParticipant = null;
 		roleChoice = "sameRole";
