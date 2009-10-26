@@ -210,12 +210,12 @@
 						</table>
 	*#
 		#end
-		#if($!siteDescription)
+		#if($!siteShortDescription)
 			<h4 style="padding-left:5px">
-				$tlang.getString("sitegen.siteinfolist.sitedes")
+				$tlang.getString("sitegen.siteinfolist.siteshortdes")
 			</h4>
 			<div style="padding-left:5px">
-				$!siteDescription
+				$!siteShortDescription
 			</div>
 
 		#end
