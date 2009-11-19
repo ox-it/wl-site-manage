@@ -220,8 +220,6 @@ public class SiteAction extends PagedResourceActionII {
 	private static org.sakaiproject.sitemanage.api.UserNotificationProvider userNotificationProvider = (org.sakaiproject.sitemanage.api.UserNotificationProvider) ComponentManager
 	.get(org.sakaiproject.sitemanage.api.UserNotificationProvider.class);
 
-	private RoleProvider roleProvider = (RoleProvider)ComponentManager.get(RoleProvider.class);
-	
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
 	private static final String SITE_MODE_SITEINFO = "siteinfo";
@@ -3578,8 +3576,8 @@ public class SiteAction extends PagedResourceActionII {
 	private List<String> getAdditionRoles(AuthzGroup realm) {
 		List<String> roles = new ArrayList<String>();
 		for (Role role : (Set<Role>)realm.getRoles()) {
-			if (!isUserRole(role)) {
-				roles.add(getRoleDisplayName(role.getId()));
+			if (!authzGroupService.isRoleAssignable(role.getId())) {
+				roles.add(authzGroupService.getRoleName(role.getId()));
 			}
 		}
 		// Make sure it's always in the same order.
@@ -3590,7 +3588,7 @@ public class SiteAction extends PagedResourceActionII {
 	private List<String> getAdditionRoles(SiteInfo siteInfo) {
 		List<String> roles = new ArrayList<String>();
 		for (String roleId : siteInfo.additionalRoles) {
-			roles.add(getRoleDisplayName(roleId));
+			roles.add(authzGroupService.getRoleName(roleId));
 		}
 		// Make sure it's always in the same order.
 		Collections.sort(roles);
@@ -3601,12 +3599,12 @@ public class SiteAction extends PagedResourceActionII {
 		// Check for .auth/.anon
 		Map<String, AdditionalRole> additionalRoles = loadAdditionalRoles(); 
 		for (Role role : (Set<Role>)realm.getRoles()) {
-			if (!isUserRole(role)) {
+			if (!authzGroupService.isRoleAssignable(role.getId())) {
 				AdditionalRole additionalRole = additionalRoles.get(role.getId());
 				if (additionalRole == null) {
 					additionalRole = new AdditionalRole();
 					additionalRole.id = role.getId();
-					additionalRole.name = getRoleDisplayName(role.getId());
+					additionalRole.name = authzGroupService.getRoleName(role.getId());
 					additionalRole.editable = false;
 					additionalRoles.put(additionalRole.id, additionalRole);
 				}
@@ -3623,67 +3621,14 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	protected Map<String, AdditionalRole> loadAdditionalRoles() {
 		Map<String, AdditionalRole> additionalRoles = new HashMap<String, AdditionalRole>();
-		if (isAllowedAnon()) {
-			AdditionalRole role = new AdditionalRole();
-			role.id = org.sakaiproject.authz.api.AuthzGroupService.ANON_ROLE;
-			role.name = getRoleDisplayName(role.id);
-			role.editable = true;
-			additionalRoles.put(role.id, role);
-		}
-		if (isAllowedAuth()) {
-			AdditionalRole role = new AdditionalRole();
-			role.id = org.sakaiproject.authz.api.AuthzGroupService.AUTH_ROLE;
-			role.name = getRoleDisplayName(role.id);
-			role.editable = true;
-			additionalRoles.put(role.id, role);
-		}
-		// 
-		if (roleProvider != null) {
-			for (String roleId : roleProvider.getAllAdditionalRoles()) {
+		for (String roleId : authzGroupService.getAdditionalRoles()) {
 				AdditionalRole role = new AdditionalRole();
 				role.id = roleId;
-				role.name = getRoleDisplayName(role.id);
+				role.name = authzGroupService.getRoleName(role.id);
 				role.editable = true;
 				additionalRoles.put(role.id, role);
 			}
-		}
 		return additionalRoles;
-	}
-
-	/**
-	 * Get the display name for a role.
-	 * This should be in the API so it can be used across tools.
-	 * @param id
-	 * @return
-	 */
-	protected String getRoleDisplayName(String id) {
-		if (org.sakaiproject.authz.api.AuthzGroupService.ANON_ROLE.equals(id)) {
-			return rb.getString("ediacc.anon"); //TODO Change to java. name
-		} else if (org.sakaiproject.authz.api.AuthzGroupService.AUTH_ROLE.equals(id)) {
-			return rb.getString("ediacc.auth"); //TODO Change to java. name
-		} else if (roleProvider != null) {
-			String name = roleProvider.getDisplayName(id);
-			if (name != null) {
-				return name;
-			}
-		}
-		return id;
-	}
-	
-	/**
-	 * Is the current user allowed to grant .anon access to the site?
-	 * @return <code>true</code> if .anon can be granted.
-	 */
-	protected boolean isAllowedAnon() {
-		return ServerConfigurationService.getBoolean("sitemanage.grant.anon", false);
-	}
-	
-	/**
-	 * Is the current user allowed to grant .auth access to the site?
-	 * @return <code>true</code> if .auth can be granted.
-	 */
-	protected boolean isAllowedAuth() {
-		return ServerConfigurationService.getBoolean("sitemanage.grant.auth", false);
 	}
 
 	private void toolSelectionIntoContext(Context context, SessionState state, String siteType, String siteId, String overridePageOrderSiteTypes) {
@@ -10559,10 +10504,10 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 		String realmId = SiteService.siteReference((String) state
 				.getAttribute(STATE_SITE_INSTANCE_ID));
 		try {
-			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
+			AuthzGroup realm = authzGroupService.getAuthzGroup(realmId);
 			// Filter the roles so we only display user roles
 			for (Role role: (Set<Role>)realm.getRoles()) {
-				if (isUserRole(role)) {
+				if (authzGroupService.isRoleAssignable(role.getId())) {
 					roles.add(role);
 				}
 			}
