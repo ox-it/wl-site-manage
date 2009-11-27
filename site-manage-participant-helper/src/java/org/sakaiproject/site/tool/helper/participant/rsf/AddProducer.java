@@ -137,6 +137,7 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
 	    	UIOutput.make(participantForm, "nonOfficialAccountSectionTitle", messageLocator.getMessage("nonOfficialAccountSectionTitle"));
 	    	UIOutput.make(participantForm, "nonOfficialAccountName", messageLocator.getMessage("nonOfficialAccountName"));
 	    	UIOutput.make(participantForm, "nonOfficialAccountLabel", messageLocator.getMessage("nonOfficialAccountLabel"));
+	    	UIMessage.make(participantForm, "nonOfficialAddMultiple", "add.multiple");
     	}
     	
     	// role choice

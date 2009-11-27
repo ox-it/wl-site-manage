@@ -676,7 +676,7 @@ public class SiteAction extends PagedResourceActionII {
 		// First: get the tool ids from configuration files
 		// initially by "wsetup.home.toolids" + site type, and if missing, use "wsetup.home.toolids"
 		if (ServerConfigurationService.getStrings("wsetup.home.toolids." + siteType) != null) {
-			rv = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.home.toolids.") + siteType));
+			rv = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.home.toolids." + siteType)));
 		} else if (ServerConfigurationService.getStrings("wsetup.home.toolids") != null) {
 			rv = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.home.toolids")));
 		}
@@ -3264,7 +3264,10 @@ public class SiteAction extends PagedResourceActionII {
 					try
 					{
 						Section s = cms.getSection(providerSectionId);
-						providerSectionListTitles.add(s.getTitle()); 
+						if (s != null)
+						{
+							providerSectionListTitles.add(s.getTitle()); 
+						}
 					}
 					catch (Exception e)
 					{
@@ -3801,7 +3804,10 @@ public class SiteAction extends PagedResourceActionII {
 				try
 				{
 					Section s = cms.getSection(sectionId);
-					sectionTitles.put(sectionId, s.getTitle());
+					if (s != null)
+					{
+						sectionTitles.put(sectionId, s.getTitle());
+					}
 				}
 				catch (Exception e)
 				{
@@ -3840,9 +3846,11 @@ public class SiteAction extends PagedResourceActionII {
 					
 					try
 					{
-					Section s = cms.getSection(courseEid);
-					if (s!=null)
-						soList.add(new SectionObject(s));
+						Section s = cms.getSection(courseEid);
+						if (s!=null)
+						{
+							soList.add(new SectionObject(s));
+						}
 					}
 					catch (Exception e)
 					{
@@ -4658,6 +4666,7 @@ public class SiteAction extends PagedResourceActionII {
 				// should never happened, as the list of templates are generated
 				// from existing sites
 				M_log.warn(this + ".doSite_type" + e.getClass().getName(), e);
+				state.removeAttribute(STATE_TEMPLATE_SITE);
 			}
 			
 			// grab site info from template
@@ -4694,6 +4703,11 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, toolIdsSelected);
 			state.setAttribute(STATE_SITE_INFO, siteInfo);
+		}
+		else
+		{
+			// no template selected
+			state.removeAttribute(STATE_TEMPLATE_SITE);
 		}
 	}
 
@@ -4998,7 +5012,8 @@ public class SiteAction extends PagedResourceActionII {
 			// default title
 			String title = sectionFieldProvider.getSectionTitle(t.getEid(), (List) multiCourseInputs.get(0));
 			try {
-				title = cms.getSection(sectionEid).getTitle();
+				Section s = cms.getSection(sectionEid);
+				title = s != null?s.getTitle():title;
 			} catch (IdNotFoundException e) {
 				// cannot find section, use the default title 
 				M_log.warn(this + ":readCourseSectionInfo: cannot find section with eid=" + sectionEid);
@@ -6893,8 +6908,20 @@ public class SiteAction extends PagedResourceActionII {
 						try {
 							User user = UserDirectoryService.getUser(rId);
 							// save role for permission check
-							roles.add(realmEdit.getUserRole(user.getId()).getId());
-							realmEdit.removeMember(user.getId());
+							if (user != null)
+							{
+								String userId = user.getId();
+								Member userMember = realmEdit.getMember(userId);
+								if (userMember != null)
+								{
+									Role role = userMember.getRole();
+									if (role != null)
+									{
+										roles.add(role.getId());
+									}
+									realmEdit.removeMember(userId);
+								}
+							}
 						} catch (UserNotDefinedException e) {
 							M_log.warn(this + ".doUpdate_participant: IdUnusedException " + rId + ". ", e);
 						}
@@ -6907,12 +6934,12 @@ public class SiteAction extends PagedResourceActionII {
 				if (!AuthzGroupService.allowUpdate(realmId)) {
 				    // see if any changed have site.upd
 				    for (String rolename: roles) {
-					Role role = realmEdit.getRole(rolename);
-					if (role != null && role.isAllowed("site.upd")) {
-					    addAlert(state, rb.getFormattedMessage("java.roleperm", new Object[]{rolename}));
-					    return;
-					}
-				    }
+						Role role = realmEdit.getRole(rolename);
+						if (role != null && role.isAllowed("site.upd")) {
+						    addAlert(state, rb.getFormattedMessage("java.roleperm", new Object[]{rolename}));
+						    return;
+							}
+					    }
 				}
 
 				if (hadMaintainUser
@@ -6958,45 +6985,49 @@ public class SiteAction extends PagedResourceActionII {
 				for (Iterator iGroups = groups.iterator(); iGroups.hasNext();)
 				{
 					Group g = (Group) iGroups.next();
-					try
+					if (g != null)
 					{
-						Set gMembers = g.getMembers();
-						for (Iterator iGMembers = gMembers.iterator(); iGMembers.hasNext();)
+						try
 						{
-							Member gMember = (Member) iGMembers.next();
-							String gMemberId = gMember.getUserId();
-							Member siteMember = s.getMember(gMemberId);
-							if ( siteMember  == null)
+							Set gMembers = g.getMembers();
+							for (Iterator iGMembers = gMembers.iterator(); iGMembers.hasNext();)
 							{
-								// user has been removed from the site
-								g.removeMember(gMemberId);
-							}
-							else
-							{
-								// check for Site Info-managed groups: don't change roles for other groups (e.g. section-managed groups)
-								String gProp = g.getProperties().getProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED);
-								
-								// if there is a difference between the role setting, remove the entry from group and add it back with correct role, all are marked "not provided"
-								if (gProp != null && gProp.equals(Boolean.TRUE.toString()) &&
-										!g.getUserRole(gMemberId).equals(siteMember.getRole()))
+								Member gMember = (Member) iGMembers.next();
+								String gMemberId = gMember.getUserId();
+								Member siteMember = s.getMember(gMemberId);
+								if ( siteMember  == null)
 								{
-									Role siteRole = siteMember.getRole();
-									if (g.getRole(siteRole.getId()) == null)
-									{
-										// in case there is no matching role as that in the site, create such role and add it to the user
-										g.addRole(siteRole.getId(), siteRole);
-									}
+									// user has been removed from the site
 									g.removeMember(gMemberId);
-									g.addMember(gMemberId, siteRole.getId(), siteMember.isActive(), false);
+								}
+								else
+								{
+									// check for Site Info-managed groups: don't change roles for other groups (e.g. section-managed groups)
+									String gProp = g.getProperties().getProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED);
+									
+									// if there is a difference between the role setting, remove the entry from group and add it back with correct role, all are marked "not provided"
+									Role groupRole = g.getUserRole(gMemberId);
+									Role siteRole = siteMember.getRole();
+									if (gProp != null && gProp.equals(Boolean.TRUE.toString()) &&
+											groupRole != null && siteRole != null && !groupRole.equals(siteRole))
+									{
+										if (g.getRole(siteRole.getId()) == null)
+										{
+											// in case there is no matching role as that in the site, create such role and add it to the user
+											g.addRole(siteRole.getId(), siteRole);
+										}
+										g.removeMember(gMemberId);
+										g.addMember(gMemberId, siteRole.getId(), siteMember.isActive(), false);
+									}
 								}
 							}
+							// post event about the participant update
+							EventTrackingService.post(EventTrackingService.newEvent(SiteService.SECURE_UPDATE_GROUP_MEMBERSHIP, g.getId(),false));
 						}
-						// post event about the participant update
-						EventTrackingService.post(EventTrackingService.newEvent(SiteService.SECURE_UPDATE_GROUP_MEMBERSHIP, g.getId(),false));
-					}
-					catch (Exception ee)
-					{
-						M_log.warn(this + ".doUpdate_related_group_participants: " + ee.getMessage() + g.getId(), ee);
+						catch (Exception ee)
+						{
+							M_log.warn(this + ".doUpdate_related_group_participants: " + ee.getMessage() + g.getId(), ee);
+						}
 					}
 					
 				}
@@ -11683,9 +11714,12 @@ public class SiteAction extends PagedResourceActionII {
 			if (selections != null && selections.size() == lvlSz) {
 				Section sect = cms.getSection((String) selections.get(selections
 						.size() - 1));
-				SectionObject so = new SectionObject(sect);
-		
-				state.setAttribute(STATE_CM_SELECTED_SECTION, so);
+				if (sect != null)
+				{
+					SectionObject so = new SectionObject(sect);
+			
+					state.setAttribute(STATE_CM_SELECTED_SECTION, so);
+				}
 			} else
 				state.removeAttribute(STATE_CM_SELECTED_SECTION);
 		
@@ -11942,9 +11976,12 @@ public class SiteAction extends PagedResourceActionII {
 			for (int i = 0; i < sectionList.size(); i++) {
 				String sectionEid = (String) sectionList.get(i);
 				Section s = cms.getSection(sectionEid);
-				SectionObject so = new SectionObject(s);
-				so.setAuthorizer(userId);
-				list.add(so);
+				if (s != null)
+				{
+					SectionObject so = new SectionObject(s);
+					so.setAuthorizer(userId);
+					list.add(so);
+				}
 			}
 		}
 		return list;
