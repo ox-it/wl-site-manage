@@ -220,7 +220,9 @@ public class SiteAddParticipantHandler {
                 for(Iterator i = realm.getRoles().iterator(); i.hasNext();)
                 { 
                 	Role r = (Role) i.next();
-                	roles.add(r);
+                	if (authzGroupService.isRoleAssignable(r.getId())) {
+                		roles.add(r);
+                	}
                 }
             
             } catch (IdUnusedException e) {
