@@ -180,7 +180,7 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
 			 // not include in the group yet
 			 if (groupProviderId == null || !groupProviderId.contains(roster))
 			 {
-				 siteMemberLabels[i] = SECTION_PREFIX + roster;
+				 siteMemberLabels[i] = SECTION_PREFIX + handler.getRosterName(roster);
 				 siteMemberValues[i] = roster;
 				 i++;
 			 }
@@ -257,7 +257,7 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
 		 {
 			 for (String groupRoster:groupRosters)
 			 {
-				 groupMemberLabels[i] = SECTION_PREFIX + groupRoster;
+				 groupMemberLabels[i] = SECTION_PREFIX + handler.getRosterName(groupRoster);
 				 groupMemberValues[i] = groupRoster;
 				 i++;
 			 }
