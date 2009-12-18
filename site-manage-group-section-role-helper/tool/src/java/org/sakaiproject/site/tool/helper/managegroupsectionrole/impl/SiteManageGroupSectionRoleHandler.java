@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.AuthzGroupService;
+import org.sakaiproject.authz.api.DisplayGroupProvider;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.Role;
@@ -272,6 +273,18 @@ public class SiteManageGroupSectionRoleHandler {
         return providerIds;
     }
     
+    public String getRosterName(String providerId)
+    {
+	if (groupProvider instanceof DisplayGroupProvider)
+	{
+		return ((DisplayGroupProvider)groupProvider).getGroupName(providerId);
+	}
+	else
+	{
+		return truncateGroupTitle(providerId);
+	}
+    }
+    
     /**
      * Gets the rosters for the group
      * @return List of roster ids
@@ -312,7 +325,13 @@ public class SiteManageGroupSectionRoleHandler {
             	try
             	{
             		AuthzGroup siteGroup = authzGroupService.getAuthzGroup(siteReference);
-            		roles.addAll(siteGroup.getRoles());
+            		Set<Role> siteRoles = siteGroup.getRoles();
+            		for (Role role: siteRoles)
+            		{
+            			if(authzGroupService.isRoleAssignable(role.getId())) {
+            				roles.add(role);
+            			}
+            		}
             	}
             	catch (GroupNotDefinedException e)
             	{
@@ -962,8 +981,8 @@ public class SiteManageGroupSectionRoleHandler {
         			roster = roster.replaceAll("-_p_-", ".");
 		        	group.setProviderGroupId(roster);
 		        		
-		        	String title = truncateGroupTitle(roster);
-		        	group.setTitle(title);
+		        	// set title
+		        	group.setTitle(getRosterName(roster));
 	    		}
     		}
 	        	

@@ -144,7 +144,7 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, ActionRes
 			 for (String roster: siteRosters) {
 				 UIBranchContainer tablerow = UIBranchContainer.make(rosterOptions, "roster-row:");
 				 UIBoundBoolean checkbox = UIBoundBoolean.make(tablerow, "roster-checkbox", "#{SiteManageGroupSectionRoleHandler.selectedRosters." + roster.replaceAll("\\.", "-_p_-") + "}");
-				 UILabelTargetDecorator.targetLabel(UIOutput.make(tablerow, "roster-title", roster), checkbox);
+				 UILabelTargetDecorator.targetLabel(UIOutput.make(tablerow, "roster-title", handler.getRosterName(roster)), checkbox);
 				 
 				 // check whether there is already a group with this roster
 				 if (handler.existRosterGroup(roster))
