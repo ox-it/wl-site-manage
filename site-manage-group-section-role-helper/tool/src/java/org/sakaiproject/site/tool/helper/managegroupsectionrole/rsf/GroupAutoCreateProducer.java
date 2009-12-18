@@ -136,7 +136,7 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, ActionRes
 			 for (String roster: siteRosters) {
 				 UIBranchContainer tablerow = UIBranchContainer.make(rosterOptions, "roster-row:");
 				 UIBoundBoolean.make(tablerow, "roster-checkbox", "#{SiteManageGroupSectionRoleHandler.selectedRosters." + roster + "}");
-				 UIOutput.make(tablerow, "roster-title", roster);
+				 UIOutput.make(tablerow, "roster-title", handler.getRosterName(roster));
 				 
 				 // check whether there is already a group with this roster
 				 if (handler.existRosterGroup(roster))
