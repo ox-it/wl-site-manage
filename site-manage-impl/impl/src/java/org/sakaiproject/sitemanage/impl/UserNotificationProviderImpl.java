@@ -61,7 +61,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	 * {@inheritDoc}
 	 */
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
-			User user, String siteTitle) {
+			User user, Site site) {
 		ResourceLoader rb = new ResourceLoader(user.getId(), "UserNotificationProvider");
 		
 		String from = serverConfigurationService.getBoolean(NOTIFY_FROM_CURRENT_USER, false)?
@@ -87,12 +87,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 			// email bnonOfficialAccounteen newly added nonOfficialAccount account
 			// and other users
 			buf.append(user.getDisplayName() + ":\n\n");
-			buf.append(rb.getString("java.following") + " "
-					+ productionSiteName + " "
-					+ rb.getFormattedMessage("java.simplesite", new Object[]{siteTitle}) + "\n");
-			buf.append(rb.getString("java.simpleby") + " ");
-			buf.append(userDirectoryService.getCurrentUser().getDisplayName()
-					+ ". \n\n");
+			buf.append(rb.getFormattedMessage("java.addedsite", new Object[]{productionSiteName, site.getTitle(), userDirectoryService.getCurrentUser().getDisplayName()}) + "\n");
 			if (newNonOfficialAccount) {
 				buf.append(serverConfigurationService.getString(
 						"nonOfficialAccountInstru", "")
@@ -103,20 +98,18 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 							+ nonOfficialAccountUrl + "\n");
 					buf.append(rb.getString("java.togeta2") + "\n\n");
 				}
-				buf.append(rb.getString("java.once") + " " + productionSiteName
-						+ ": \n");
-				buf.append(rb.getString("java.loginhow1") + " "
-						+ productionSiteName + ": " + productionSiteUrl + "\n");
-				buf.append(rb.getString("java.loginhow2") + "\n");
-				buf.append(rb.getString("java.loginhow3") + "\n");
+				buf.append(rb.getFormattedMessage("java.tolog", new Object[] {
+						site.getUrl(),
+						serverConfigurationService.getString("xlogin.text", "Login"),
+						site.getTitle()
+						}));
 			} else {
-				buf.append(rb.getString("java.tolog") + "\n");
-				buf.append(rb.getString("java.loginhow1") + " "
-						+ productionSiteName + ": " + productionSiteUrl + "\n");
-				buf.append(rb.getString("java.loginhow2") + "\n");
-				buf.append(rb.getString("java.loginhow3u") + "\n");
+				buf.append(rb.getFormattedMessage("java.tolog", new Object[] {
+						site.getUrl(),
+						serverConfigurationService.getString("login.text", "Login"),
+						site.getTitle()
+						}));
 			}
-			buf.append(rb.getFormattedMessage("java.tabscreen", new Object[]{siteTitle}));
 			content = buf.toString();
 			emailService.send(from, to, message_subject, content, headerTo,
 					replyTo, null);
@@ -129,7 +122,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	 * {@inheritDoc}
 	 */
 	public void notifyNewUserEmail(User user, String newUserPassword,
-			String siteTitle) {
+			Site site) {
 		ResourceLoader rb = new ResourceLoader("UserNotificationProvider");
 		// set the locale to individual receipient's setting
 		rb.setContextLocale(rb.getLocale(user.getId()));
@@ -144,8 +137,8 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 		String headerTo = newUserEmail;
         // UVa: change Reply-To to be the From (collab support) address
 		String replyTo = from;
-		String message_subject = productionSiteName + " "
-				+ rb.getString("java.newusernoti");
+		String message_subject = rb.getFormattedMessage("java.newusernoti",
+				new Object[]{productionSiteName});
 		String content = "";
 
 		if (from != null && newUserEmail != null) {
@@ -155,15 +148,14 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 			// email body
 			buf.append(user.getDisplayName() + ":\n\n");
 
-			buf.append(rb.getString("java.addedto") + " " + productionSiteName
-					+ " (" + productionSiteUrl + ") ");
-			buf.append(rb.getString("java.simpleby") + " ");
-			buf.append(userDirectoryService.getCurrentUser().getDisplayName()
-					+ ". \n\n");
-			buf.append(rb.getString("java.passwordis1") + "\n"
-					+ newUserPassword + "\n\n");
-			buf.append(rb.getString("java.passwordis2") + "\n\n");
-			buf.append(rb.getString("java.newuserfooter")+ "\n");
+			buf.append(rb.getFormattedMessage("java.addedto", new Object[]{
+					productionSiteName,
+					productionSiteUrl,
+					userDirectoryService.getCurrentUser().getDisplayName()
+					})).append("\n\n");
+			buf.append(rb.getFormattedMessage("java.usernamedis", new Object[]{user.getEid()})).append('\n');
+			buf.append(rb.getFormattedMessage("java.passwordis", new Object[]{newUserPassword})).append('\n');;
+			buf.append(rb.getString("java.newuserfooter"));
 			
 			content = buf.toString();
 			emailService.send(from, to, message_subject, content, headerTo,
