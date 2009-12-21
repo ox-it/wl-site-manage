@@ -498,8 +498,8 @@ public class SiteAddParticipantHandler {
 
 								// send notification
 								if (notify) {
-									// send notification email
-									notiProvider.notifyAddedParticipant(!isOfficialAccount(eId), user, site.getTitle());
+									// send notification email 
+									notiProvider.notifyAddedParticipant(!isOfficialAccount(eId), user, site);
 									
 								}
 							}
@@ -586,7 +586,7 @@ public class SiteAddParticipantHandler {
 						boolean notifyNewUserEmail = (getServerConfigurationString("notifyNewUserEmail", Boolean.TRUE.toString()))
 								.equalsIgnoreCase(Boolean.TRUE.toString());
 						if (notifyNewUserEmail) {    						
-								notiProvider.notifyNewUserEmail(uEdit, pw, site != null?site.getTitle():"");
+								notiProvider.notifyNewUserEmail(uEdit, pw, site);
 						}
 					} catch (UserIdInvalidException ee) {
 						targettedMessageList.addMessage(new TargettedMessage("java.isinval",new Object[] { eId }, TargettedMessage.SEVERITY_INFO));

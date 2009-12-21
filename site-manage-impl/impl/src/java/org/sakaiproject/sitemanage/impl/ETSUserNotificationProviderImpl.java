@@ -56,6 +56,7 @@ import org.sakaiproject.email.api.EmailService;
 import org.sakaiproject.emailtemplateservice.model.EmailTemplate;
 import org.sakaiproject.emailtemplateservice.model.RenderedTemplate;
 import org.sakaiproject.emailtemplateservice.service.EmailTemplateService;
+import org.sakaiproject.site.api.Site;
 import org.sakaiproject.sitemanage.api.UserNotificationProvider;
 import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.SessionManager;
@@ -135,7 +136,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	}
 	
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
-			User user, String siteTitle) {
+			User user, Site site) {
 		
 		String from = serverConfigurationService.getBoolean(NOTIFY_FROM_CURRENT_USER, false)?
 				getCurrentUserEmailAddress():getSetupRequestEmailAddress();
@@ -172,7 +173,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	    				"ui.service", ""));
 	            replacementValues.put("currentUserName",userDirectoryService.getCurrentUser().getDisplayName());
 	            replacementValues.put("localSakaiUrl", serverConfigurationService.getPortalUrl());
-	            replacementValues.put("siteName", siteTitle);
+	            replacementValues.put("siteName", site.getTitle());
 	            replacementValues.put("productionSiteName", productionSiteName);
 	            replacementValues.put("newNonOfficialAccount", new Boolean(newNonOfficialAccount).toString());
 	         
@@ -198,7 +199,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	}
 
 	public void notifyNewUserEmail(User user, String newUserPassword,
-			String siteTitle) {
+			Site site) {
 		
 		
 		String from = getSetupRequestEmailAddress();
@@ -234,9 +235,9 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            replacementValues.put("currentUserName",userDirectoryService.getCurrentUser().getDisplayName());
 	            replacementValues.put("localSakaiUrl", serverConfigurationService.getPortalUrl());
 	            replacementValues.put("newPassword",newUserPassword);
-	            replacementValues.put("siteName", siteTitle);
+	            replacementValues.put("siteName", site.getTitle());
 	            replacementValues.put("productionSiteName", productionSiteName);
-	        RenderedTemplate template = emailTemplateService.getRenderedTemplateForUser(this.NOTIFY_NEW_USER, user.getReference(), replacementValues);    		
+	        RenderedTemplate template = emailTemplateService.getRenderedTemplateForUser(NOTIFY_NEW_USER, user.getReference(), replacementValues);    		
 	    	if (template == null)
 				return;
 	        content = template.getRenderedMessage();
