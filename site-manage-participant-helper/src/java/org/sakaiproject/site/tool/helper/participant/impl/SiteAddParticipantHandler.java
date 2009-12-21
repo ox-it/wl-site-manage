@@ -565,8 +565,8 @@ public class SiteAddParticipantHandler {
 
 								// send notification
 								if (notify) {
-									// send notification email
-									notiProvider.notifyAddedParticipant(!isOfficialAccount(eId), user, site.getTitle());
+									// send notification email 
+									notiProvider.notifyAddedParticipant(!isOfficialAccount(eId), user, site);
 									
 								}
 							}
@@ -654,7 +654,7 @@ public class SiteAddParticipantHandler {
 								.equalsIgnoreCase(Boolean.TRUE.toString());
 						boolean validateUsers = serverConfigurationService.getBoolean("siteManage.validateNewUsers", false);
 						if (notifyNewUserEmail && !validateUsers) {    						
-								notiProvider.notifyNewUserEmail(uEdit, pw, site != null ? site.getTitle():"");
+								notiProvider.notifyNewUserEmail(uEdit, pw, site);
 						} else if (notifyNewUserEmail && validateUsers) {
 							validationUsers.add(uEdit.getId());
 						}
