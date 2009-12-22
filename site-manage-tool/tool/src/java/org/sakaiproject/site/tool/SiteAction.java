@@ -276,7 +276,8 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-importUser",
 			"-siteInfo-changeAdmin", // 62
 			"-selectAdmin", // 63
-			"-exportMemberList" // 64
+			"-exportMemberList", // 64
+			"-selectAdmin" // 65
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -3082,10 +3083,10 @@ public class SiteAction extends PagedResourceActionII {
 			return (String) getContext(data).get("template") + TEMPLATE[62];
 
 		
-		case 63:
+		case 63: // Used to choose an admin realm during site creation. 
+		case 65: // Used when selecting the admin site when duplicating
 			/*
 			 * build context for chef_site-selectAdmin.vm
-			 * Used to choose an admin realm during site creation. 
 			 */
 			Boolean unmanaged = SiteService.allowAddSite(null);
 			Boolean managed = SiteService.allowAddManagedSite();
@@ -6521,7 +6522,7 @@ public class SiteAction extends PagedResourceActionII {
 		
 		if (canChooseAdminSite(data, state)) {
 			// Need to reuse the same template...
-			state.setAttribute(STATE_TEMPLATE_INDEX, "63");
+			state.setAttribute(STATE_TEMPLATE_INDEX, "65");
 		} else if (state.getAttribute(STATE_MESSAGE) == null) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "29");
 		}
@@ -7931,6 +7932,21 @@ public class SiteAction extends PagedResourceActionII {
 		case 63:
 			if (forward) {
 				doSite_selectAdmin(state, params);
+			}
+			break;
+		case 65:
+			if (forward) {
+				String adminSite = params.getString("adminSite");
+
+				if (adminSite != null && adminSite.length() > 0) {
+					state.setAttribute(STATE_ADMIN_REALM, adminSite);
+				}
+				if (state.getAttribute(STATE_ADMIN_REALM) != null) {
+					state.setAttribute(STATE_TEMPLATE_INDEX, "29");
+				} else {
+					// Error Message
+					addAlert(state, rb.getString("java.noadminsite"));
+				}
 			}
 			break;
 		}
