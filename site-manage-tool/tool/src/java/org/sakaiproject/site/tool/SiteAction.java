@@ -522,6 +522,9 @@ public class SiteAction extends PagedResourceActionII {
 	// list of UM Grad Tools site types for editing
 	public static final String GRADTOOLS_SITE_TYPES = "gradtools_site_types";
 
+	// list of Admin site types which should be restricted.
+	public static final String ADMIN_SITE_TYPES = "admin_site_types";
+
 	public static final String SITE_DUPLICATED = "site_duplicated";
 
 	public static final String SITE_DUPLICATED_NAME = "site_duplicated_named";
@@ -964,6 +967,16 @@ public class SiteAction extends PagedResourceActionII {
 								.getStrings("gradToolsSiteType")));
 			}
 			state.setAttribute(GRADTOOLS_SITE_TYPES, gradToolsSiteTypes);
+		}
+		
+		if (state.getAttribute(ADMIN_SITE_TYPES) == null) {
+			List<String> adminSiteTypes = Collections.emptyList();
+			if (ServerConfigurationService.getStrings("adminSiteType") != null) {
+				adminSiteTypes = new ArrayList<String>(Arrays
+						.asList(ServerConfigurationService
+								.getStrings("adminSiteType")));
+			}
+			state.setAttribute(ADMIN_SITE_TYPES, adminSiteTypes);
 		}
 		
 		if (ServerConfigurationService.getStrings("titleEditableSiteType") != null) {
@@ -2023,15 +2036,10 @@ public class SiteAction extends PagedResourceActionII {
 				if (allowUpdateSite) 
 				{
 					if (!isMyWorkspace) {
-						List gradToolsSiteTypes = (List) state
-								.getAttribute(GRADTOOLS_SITE_TYPES);
-						boolean isGradToolSite = false;
-						if (siteType != null
-								&& gradToolsSiteTypes.contains(siteType)) {
-							isGradToolSite = true;
-						}
+
+						boolean isRestrictedSite = isRestrictedSite(state,siteType);
 						if (siteType == null || siteType != null
-								&& !isGradToolSite) {
+								&& !isRestrictedSite) {
 							// hide site access for GRADTOOLS
 							// type of sites
 							b.add(new MenuEntry(
@@ -2040,7 +2048,7 @@ public class SiteAction extends PagedResourceActionII {
 						}
 						
 						if (siteType == null || siteType != null
-								&& !isGradToolSite) {
+								&& !isRestrictedSite) {
 							// hide site duplicate and import
 							// for GRADTOOLS type of sites
 							if (SiteService.allowAddSite(null) || SiteService.allowAddManagedSite())
@@ -3105,6 +3113,27 @@ public class SiteAction extends PagedResourceActionII {
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 	}
+
+
+	/**
+	 * Some site don't get the full set of options in Site Info.
+	 * @param state The session state.
+	 * @param siteType The type of the site, eg project, course.
+	 * @return <code>true</code> is the site is a restricted one.
+	 */
+	private boolean isRestrictedSite(SessionState state, String siteType) {
+		List gradToolsSiteTypes = (List) state.getAttribute(GRADTOOLS_SITE_TYPES);
+		List adminSiteTypes = (List) state.getAttribute(ADMIN_SITE_TYPES);
+
+		boolean isRestrictedSite = false;
+		if (siteType != null && gradToolsSiteTypes.contains(siteType)) {
+			isRestrictedSite = true;
+		} else if (siteType != null && adminSiteTypes.contains(siteType) && !SecurityService.isSuperUser()) {
+			isRestrictedSite = true;
+		}
+		return isRestrictedSite;
+	}
+
 
 
 	private void addAccess(Context context, Map<String, AdditionalRole> access) {
