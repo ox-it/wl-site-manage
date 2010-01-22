@@ -62,6 +62,7 @@ public class SitePageEditHandler {
     private Map<String, SitePage> pages;
     public String[] selectedTools = new String[] {};
     private Set<String> unhideables;
+    private Set<String> uneditables;
     public String state;
     public String title = "";
     public String test;
@@ -76,6 +77,7 @@ public class SitePageEditHandler {
     private final String SITE_UPD = "site.upd";
     private final String HELPER_ID = "sakai.tool.helper.id";
     private final String UNHIDEABLES_CFG = "poh.unhideables";
+    private final String UNEDITABLES_CFG = "poh.uneditables";
     private final String PAGE_ADD = "pageorder.add";
     private final String PAGE_DELETE = "pageorder.delete";
     private final String PAGE_RENAME = "pageorder.rename";
@@ -83,6 +85,9 @@ public class SitePageEditHandler {
     private final String PAGE_HIDE = "pageorder.hide";
     private final String SITE_REORDER = "pageorder.reorder";
     private final String SITE_RESET = "pageorder.reset";
+
+    // Preserve for configuration backward compat
+    public String ALLOW_TITLE_EDIT = "org.sakaiproject.site.tool.helper.order.rsf.PageListProducer.allowTitleEdit";
 
     //System config for which tools can be added to a site more then once
     private final String MULTI_TOOLS = "sakai.site.multiPlacementTools";
@@ -168,6 +173,11 @@ public class SitePageEditHandler {
             for (int i = 0; i < toolIds.length; i++) {
                 unhideables.add(toolIds[i].trim());
             }
+        }
+        String uneditablesConfig = serverConfigurationService.getString(UNEDITABLES_CFG, "");
+        uneditables = new HashSet<String>();
+        for (String tool: uneditablesConfig.split(",")) {
+        	uneditables.add(tool);
         }
     }
     
@@ -656,5 +666,21 @@ public class SitePageEditHandler {
         }    // compare
         
     } //ToolComparator    
+
+
+	public boolean allowEdit(SitePage page) {
+        //default value is to allow the Title to be edited.  If the sakai properties 
+        //specifically requests this to be set to false, then do not allow this function
+		boolean allow = serverConfigurationService.getBoolean(ALLOW_TITLE_EDIT, true);
+		if (uneditables.size() > 0) {
+			for(Iterator<ToolConfiguration> toolIt = page.getTools().iterator(); toolIt.hasNext() && allow;) {
+				ToolConfiguration toolConfig = toolIt.next();
+				if (uneditables.contains(toolConfig.getToolId())) {
+					allow = false;
+				}
+			}
+		}
+		return allow;
+	}
 }
 
