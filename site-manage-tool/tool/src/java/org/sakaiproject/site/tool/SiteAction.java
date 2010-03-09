@@ -652,12 +652,12 @@ public class SiteAction extends PagedResourceActionII {
 	/** the web content tool id **/
 	private final static String WEB_CONTENT_TOOL_ID = "sakai.iframe";
 	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG = "source";
-	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE = "http://";
+	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE = "http://www.sakaiproject.org/news-rss-feed";
 
 	/** the news tool **/
 	private final static String NEWS_TOOL_ID = "sakai.news";
 	private final static String NEWS_TOOL_CHANNEL_CONFIG = "channel-url";
-	private final static String NEWS_TOOL_CHANNEL_CONFIG_VALUE = "http://www.sakaiproject.org/news-rss-feed";
+	private final static String NEWS_TOOL_CHANNEL_CONFIG_VALUE = "http://";
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -6311,7 +6311,7 @@ public class SiteAction extends PagedResourceActionII {
 				else
 				{
 					// default value
-					defaultValues.add(NEWS_TOOL_CHANNEL_CONFIG_VALUE);
+					defaultValues.add(WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE);
 				}
 			}
 			else if (toolId.equals(WEB_CONTENT_TOOL_ID))
@@ -6323,7 +6323,7 @@ public class SiteAction extends PagedResourceActionII {
 				else
 				{
 					// default value
-					defaultValues.add(WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE);
+					defaultValues.add(NEWS_TOOL_CHANNEL_CONFIG_VALUE);
 				}
 			}
 		}
