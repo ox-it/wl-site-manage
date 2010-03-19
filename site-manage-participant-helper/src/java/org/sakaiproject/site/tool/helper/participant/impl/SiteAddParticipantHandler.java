@@ -26,6 +26,7 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.util.Participant;
+import org.sakaiproject.sitemanage.api.PasswordGenerator;
 import org.sakaiproject.sitemanage.api.UserNotificationProvider;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.Tool;
@@ -79,6 +80,8 @@ public class SiteAddParticipantHandler {
     public SessionManager sessionManager = null;
     public ServerConfigurationService serverConfigurationService;
     private final String HELPER_ID = "sakai.tool.helper.id";
+    private PasswordGenerator passwordGenerator;
+
 
     public MessageLocator messageLocator;
     
@@ -201,7 +204,7 @@ public class SiteAddParticipantHandler {
 	
 	/** the user selected */
 	public List<UserRoleEntry> userRoleEntries = new Vector<UserRoleEntry>();
-	
+
 	public String getUserRole(String userId)
 	{
 		String rv = "";
@@ -1161,29 +1164,12 @@ public class SiteAddParticipantHandler {
 	 */
 	protected String generatePassword()
 	{
-		// set random password
-		int length = 9;
-		StringBuffer rndbuf = new StringBuffer(length);
-		for (int i = 0; i < length; ++i){
-			int chooseArray = (int) (4 * Math.random());
-		    switch (chooseArray) {
-		    	case 0: 
-		    		rndbuf.append(LOWER_ALPHA_ARRAY[(int) ( LOWER_ALPHA_ARRAY.length * Math.random())]);
-		    		break;
-		    	case 1:
-		    		rndbuf.append(UPPER_ALPHA_ARRAY[(int) ( UPPER_ALPHA_ARRAY.length * Math.random())]);
-		    		break;
-		    	case 2:
-		    		rndbuf.append(NUMBER_ARRAY[(int) ( NUMBER_ARRAY.length * Math.random())]);
-		    		break;
-		    	/*case 3:
-		    		rndbuf.append(SYMBOL_ARRAY[(int) ( SYMBOL_ARRAY.length * Math.random())]);
-		    		break;*/
-		    	default:
-		    		break;
-		    }
-		}
-		return rndbuf.toString();
+		return passwordGenerator.generate();
 	}
+
+	public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
+	    this.passwordGenerator = passwordGenerator;
+	}
+
 }
 
