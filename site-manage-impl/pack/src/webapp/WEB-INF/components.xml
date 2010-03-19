@@ -76,5 +76,20 @@
     			bean="org.sakaiproject.springframework.orm.hibernate.GlobalSessionFactory" />
     	</property>
     </bean>
+    
+    <alias alias="org.sakaiproject.sitemanage.api.PasswordGenerator"
+        name="org.sakaiproject.sitemanage.impl.SubCharsPasswordGenerator"/>
+    
+    <bean id="org.sakaiproject.sitemanage.impl.SubCharsPasswordGenerator"
+       class="org.sakaiproject.sitemanage.impl.SubCharsPasswordGenerator">
+       <property name="source" ref="org.sakaiproject.sitemanage.impl.TrigraphPasswordGenerator"/>
+       <property name="includeCap" value="true"/>
+       <property name="includeNumber" value="true"/>
+    </bean>
+    
+    <bean id="org.sakaiproject.sitemanage.impl.TrigraphPasswordGenerator"
+        class="org.sakaiproject.sitemanage.impl.TrigraphPasswordGenerator">
+           <property name="length" value="8"/>
+    </bean>
 
 </beans>

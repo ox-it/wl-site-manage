@@ -12,6 +12,7 @@
     <property name="targettedMessageList" ref="targettedMessageList" />
     <property name="messageLocator" ref="messageLocator"/>
     <property name="notiProvider" ref="org.sakaiproject.sitemanage.api.UserNotificationProvider" />
+    <property name="passwordGenerator" ref="org.sakaiproject.sitemanage.api.PasswordGenerator"/>
   </bean>
   
   <bean id="AddProducer"

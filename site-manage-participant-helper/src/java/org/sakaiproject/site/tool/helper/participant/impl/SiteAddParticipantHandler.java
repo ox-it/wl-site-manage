@@ -43,6 +43,7 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.util.Participant;
+import org.sakaiproject.sitemanage.api.PasswordGenerator;
 import org.sakaiproject.sitemanage.api.UserNotificationProvider;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolManager;
@@ -71,7 +72,7 @@ public class SiteAddParticipantHandler {
     /** Our log (commons). */
     private static Log M_log = LogFactory.getLog(SiteAddParticipantHandler.class);
 
-	private static final String EMAIL_CHAR = "@";
+    private static final String EMAIL_CHAR = "@";
     public Site site = null;
     public SiteService siteService = null;
     public AuthzGroupService authzGroupService = null;
@@ -79,6 +80,8 @@ public class SiteAddParticipantHandler {
     public SessionManager sessionManager = null;
     public ServerConfigurationService serverConfigurationService;
     private final String HELPER_ID = "sakai.tool.helper.id";
+    private PasswordGenerator passwordGenerator;
+
 
     public MessageLocator messageLocator;
     
@@ -164,7 +167,7 @@ public class SiteAddParticipantHandler {
 	
 	/** the user selected */
 	public List<UserRoleEntry> userRoleEntries = new Vector<UserRoleEntry>();
-	
+
 	public String getUserRole(String userId)
 	{
 		String rv = "";
@@ -570,14 +573,7 @@ public class SiteAddParticipantHandler {
 						// set the guest user type
 						uEdit.setType("guest");
 
-						// set password to a positive random number
-						Random generator = new Random(System
-								.currentTimeMillis());
-						Integer num = new Integer(generator
-								.nextInt(Integer.MAX_VALUE));
-						if (num.intValue() < 0)
-							num = new Integer(num.intValue() * -1);
-						String pw = num.toString();
+						String pw = passwordGenerator.generate();
 						uEdit.setPassword(pw);
 
 						// and save
@@ -935,5 +931,10 @@ public class SiteAddParticipantHandler {
 	public void setNotiProvider(UserNotificationProvider notiProvider) {
 		this.notiProvider = notiProvider;
 	}
+
+	public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
+	    this.passwordGenerator = passwordGenerator;
+	}
+
 }
 
