@@ -1818,6 +1818,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("siteFriendlyUrls", getSiteUrlsForSite(site));
 				context.put("siteDefaultUrl", getDefaultSiteUrl(siteId));
 				
+				context.put("siteId", site.getId());
 				context.put("siteIcon", site.getIconUrl());
 				context.put("siteTitle", site.getTitle());
 				context.put("siteDescription", site.getDescription());
@@ -13168,6 +13169,90 @@ public class SiteAction extends PagedResourceActionII {
 			doCancel(data);
 		}
 	}
+
+	/**
+	 * Handle the eventSubmit_doJoin command to have the user join this site.
+	 */
+	public void doJoin(RunData data) {
+		
+		final SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		final ParameterParser params = data.getParameters();
+		
+		final String id = params.get("itemReference");
+		String siteTitle = null;
+		
+		if (id != null)	{
+			try	{
+				// join the site
+				siteTitle = SiteService.getSite(id).getTitle();
+				SiteService.join(id);
+				String msg = rb.getString("sitinfimp.youhave2") + " " + siteTitle;
+				addAlert(state, msg);
+				
+			} catch (IdUnusedException e) {
+				Log.warn("chef", this + ".doJoin(): " + e);
+				
+			} catch (PermissionException e)	{
+				Log.warn("chef", this + ".doJoin(): " + e);
+				
+			} catch (InUseException e) {
+				addAlert(state, siteTitle + " "
+						+ rb.getString("sitinfimp.sitebeing") + " ");
+			}
+		}
+		
+		// refresh the whole page
+		scheduleTopRefresh();
+		
+	} // doJoin
+	
+	/**
+	 * Handle the eventSubmit_doUnjoin command to have the user un-join this site.
+	 */
+	public void doUnjoin(RunData data) {
+		
+		SessionState state = ((JetspeedRunData) data)
+			.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		final ParameterParser params = data.getParameters();
+
+		final String id = params.get("itemReference");
+		String siteTitle = null;
+		
+		if (id != null)	{
+			try	{
+				siteTitle = SiteService.getSite(id).getTitle();
+				SiteService.unjoin(id);
+				String msg = rb.getString("sitinfimp.youhave") + " " + siteTitle;
+				addAlert(state, msg);
+				
+			} catch (IdUnusedException ignore) {
+				
+			} catch (PermissionException e)	{
+				// This could occur if the user's role is the maintain role for the site, and we don't let the user
+				// unjoin sites they are maintainers of
+				Log.warn("chef", this + ".doUnjoin(): " + e);
+				//TODO can't access site so redirect to portal
+				
+			} catch (InUseException e) {
+				addAlert(state, siteTitle + " "
+						+ rb.getString("sitinfimp.sitebeing") + " ");
+			}
+		}
+		
+		// refresh the whole page
+		scheduleTopRefresh();
+		
+		/*
+		 * It would have been nice to redirect to the portal 
+		 * if the user no longer has access to view the site;
+		 * but it seems that it is not possible in velocity
+		 * to redirect if action is set.
+		 * 
+		*/
+		
+	} // doUnjoin
+
 	
 }
 
