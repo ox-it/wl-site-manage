@@ -92,7 +92,7 @@
 				<th scope="col" id="selected"></th>
 			#end
 				<th scope="col" id="title">$tlang.getString("list.work")</th>
-				<th scope="col" id="go"></th>
+				<th scope="col" id="go">$tlang.getString("list.visit")</th>
 				<th scope="col" id="type">$tlang.getString("list.type")</th>
 				<th scope="col" id="owner">$tlang.getString("list.owner")</th>
 				<th scope="col" id="joinable">$tlang.getString("list.joinable")</th>
