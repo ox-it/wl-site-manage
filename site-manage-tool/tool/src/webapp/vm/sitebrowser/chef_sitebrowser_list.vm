@@ -101,7 +101,7 @@
 				<th scope="col" id="selected"></th>
 			#end
 				<th scope="col" id="title">$tlang.getString("list.work")</th>
-				<th scope="col" id="go"></th>
+				<th scope="col" id="go">$tlang.getString("list.info")</th>
 				<th scope="col" id="type">$tlang.getString("list.type")</th>
 				<th scope="col" id="owner">$tlang.getString("list.owner")</th>
 				<th scope="col" id="joinable">$tlang.getString("list.joinable")</th>
@@ -120,15 +120,15 @@
 	                #end
                         <td headers="title">
 							<h4>
-                             <a href="#toolLinkParam("$action" "doVisit" "id=$validator.escapeUrl($site.Id)")"  title="$tlang.getString("list.public") $validator.escapeHtml($site.Title) $tlang.getString("site")">
+								<a href="$site.url" target="_top" title="$tlang.getString("list.go") $validator.escapeHtml($site.Title) $tlang.getString("site")">
                                         $validator.escapeHtml($site.Title)
-                               </a>
-							  </h4> 
+                                </a>
+							</h4> 
                        </td>
                         <td headers="go">
 							<span class="itemAction">
-								<a href="$site.url" target="_top" title="$tlang.getString("list.go") $validator.escapeHtml($site.Title) $tlang.getString("site")">
-									[$tlang.getString("list.go.action")]
+								<a href="#toolLinkParam("$action" "doVisit" "id=$validator.escapeUrl($site.Id)")"  title="$tlang.getString("list.public") $validator.escapeHtml($site.Title) $tlang.getString("site")">
+									$tlang.getString("list.go.action") $validator.escapeHtml($site.Title)
 								</a>
 							</span>
 						</td>
