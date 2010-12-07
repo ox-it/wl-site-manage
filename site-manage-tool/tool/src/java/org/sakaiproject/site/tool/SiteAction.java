@@ -109,6 +109,7 @@ import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SitePage;
+import org.sakaiproject.site.api.SiteService.SelectionType;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
@@ -4444,10 +4445,11 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_ADMIN_REALM, adminSite);
 		}
 		if (state.getAttribute(STATE_ADMIN_REALM) != null) {
+			List<Site> templateSites = getTemplateSites();
 			
 			List siteTypes = (List) state.getAttribute(STATE_SITE_TYPES);
 			if (siteTypes != null) {
-				if (siteTypes.size() == 1) {
+				if (siteTypes.size() == 1 && templateSites.isEmpty()) {
 					String siteType = (String) siteTypes.get(0);
 					if (!siteType.equals(ServerConfigurationService.getString(
 							"courseSiteType", (String) state.getAttribute(STATE_COURSE_SITE_TYPE)))) {
@@ -10199,6 +10201,16 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	private void setTemplateListForContext(Context context, SessionState state)
 	{   
+		List templateSites = getTemplateSites();
+		
+		context.put("templateSites",templateSites);
+		context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
+		
+	} // setTemplateListForContext
+
+
+
+	private List getTemplateSites() {
 		List templateSites = new ArrayList();
 		
 		boolean allowedForTemplateSites = true;
@@ -10232,16 +10244,23 @@ public class SiteAction extends PagedResourceActionII {
 			templateCriteria.put("template", "true");
 			
 			templateSites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ANY, null, null, templateCriteria, SortType.TYPE_ASC, null);
+			// Look for templates based on property.
+			String[] siteTemplates = siteTemplates = StringUtil.split(ServerConfigurationService.getString("site.templates", "template"), ",");
+			for (String siteId: siteTemplates) {
+				try {
+					Site site = SiteService.getSite(siteId);
+					templateSites.add(site);
+				} catch (IdUnusedException iue) {
+					M_log.info(this + ".setTemplateListForContext: cannot find site with id " + siteId);
+				}
+			}
 		}
 		
 		// If no templates could be found, stick an empty list in the context
 		if(templateSites == null || templateSites.size() <= 0)
 			templateSites = new ArrayList();
-		
-		context.put("templateSites",templateSites);
-		context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
-		
-	} // setTemplateListForContext
+		return templateSites;
+	}
 	
 	/**
 	 * %%% legacy properties, to be cleaned up
