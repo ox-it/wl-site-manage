@@ -124,6 +124,7 @@ import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SitePage;
+import org.sakaiproject.site.api.SiteService.SelectionType;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
@@ -4306,10 +4307,11 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_ADMIN_REALM, adminSite);
 		}
 		if (state.getAttribute(STATE_ADMIN_REALM) != null) {
+			List<Site> templateSites = getTemplateSites();
 			
 			List siteTypes = (List) state.getAttribute(STATE_SITE_TYPES);
 			if (siteTypes != null) {
-				if (siteTypes.size() == 1) {
+				if (siteTypes.size() == 1 && templateSites.isEmpty()) {
 					String siteType = (String) siteTypes.get(0);
 					if (!siteType.equals(ServerConfigurationService.getString(
 							"courseSiteType", (String) state.getAttribute(STATE_COURSE_SITE_TYPE)))) {
@@ -9697,39 +9699,46 @@ public class SiteAction extends PagedResourceActionII {
 	{   
 		Hashtable<String, List<Site>> templateList = new Hashtable<String, List<Site>>();
 		
-		// find all template sites.
-		// need to have a default OOTB template site definition to faciliate testing without changing the sakai.properties file.
-		String[] siteTemplates = siteTemplates = StringUtil.split(ServerConfigurationService.getString("site.templates", "template"), ",");
-		
-		for (String siteTemplateId:siteTemplates) {
-			try
+		List<Site> siteTemplates = getTemplateSites();
+
+		for (Site siteTemplate: siteTemplates) {
+			String type = siteTemplate.getType();
+			if (type != null)
 			{
-				Site siteTemplate = SiteService.getSite(siteTemplateId);
-				if (siteTemplate != null)
+				// populate the list according to template site type
+				List<Site> subTemplateList = new Vector<Site>();
+				if (templateList.containsKey(type))
 				{
-					// get the type of template
-					String type = siteTemplate.getType();
-					if (type != null)
-					{
-						// populate the list according to template site type
-						List<Site> subTemplateList = new Vector<Site>();
-						if (templateList.containsKey(type))
-						{
-							subTemplateList = templateList.get(type);
-						}
-						subTemplateList.add(siteTemplate);
-						templateList.put(type, subTemplateList);
-					}
+					subTemplateList = templateList.get(type);
 				}
-			}
-			catch (IdUnusedException e)
-			{
-				M_log.info(this + ".setTemplateListForContext: cannot find site with id " + siteTemplateId);
+				subTemplateList.add(siteTemplate);
+				templateList.put(type, subTemplateList);
 			}
 		}
 		
 	    context.put("templateList", templateList);
 	} // setTemplateListForContext
+
+
+
+	private List<Site> getTemplateSites() {
+		// find all template sites defined by config.
+		String[] siteTemplates = siteTemplates = StringUtil.split(ServerConfigurationService.getString("site.templates", "template"), ",");
+		List<Site> sites = new ArrayList<Site>(siteTemplates.length);
+		for (String siteId: siteTemplates) {
+			try {
+				Site site = SiteService.getSite(siteId);
+				sites.add(site);
+			} catch (IdUnusedException iue) {
+				M_log.info(this + ".setTemplateListForContext: cannot find site with id " + siteId);
+			}
+		}
+		// Look for template sites defined by a property.
+		for (Site site: (List<Site>)SiteService.getSites(SelectionType.ANY, null, null, Collections.singletonMap("template", "true"), SortType.NONE, null)) {
+			sites.add(site);
+		}
+		return sites;
+	}
 	
 	/**
 	 * %%% legacy properties, to be cleaned up
