@@ -1936,6 +1936,8 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("siteJoinable", new Boolean(site.isJoinable()));
 				}
 				
+				context.put("allowUnjoin", SiteService.allowUnjoinSite(site.getId()));
+				
 				Role userRole = site.getUserRole(UserDirectoryService.getCurrentUser().getId());
 				if (null != userRole) {
 					context.put("siteUserMember", true);
