@@ -99,44 +99,42 @@
 				</td>
 			</tr>
 		
-		    #if (!$siteUserMember)
-		    	<tr>
+			#if ($siteJoinable)
+			
+				<tr>
 					<th>
 						&nbsp;
 					</th>
 					<td>
+					
+		    		#if (!$siteUserMember)
+					
 						<form name="joinSiteForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
 							<input type="hidden" name="itemReference" value="$siteId"/>
 							<input type="submit" name="eventSubmit_doJoin" value="$tlang.getString("sitegen.siteinfolist.sitejoin")"/>
 						</form>
-					</td>
-				</tr>
-		    #else
-		    	#if ($allowUnjoin)
-		    		<tr>
-						<th>
-							&nbsp;
-						</th>
-						<td>
+					
+		   			#else
+		    			#if ($allowUnjoin)
+						
 							<form name="unjoinSiteForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
 								<input type="hidden" name="itemReference" value="$siteId"/>
 								<input type="submit" name="eventSubmit_doUnjoin" value="$tlang.getString("sitegen.siteinfolist.siteunjoin")"/>
 							</form>
-						</td>
-					</tr>
-				#else
-					<tr>
-						<th>
-							&nbsp;
-						</th>
-						<td>
+						
+						#else
+						
 							<form name="unjoinSiteForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
 								<input type="hidden" name="itemReference" value="$siteId"/>
 								<input type="submit" disabled="disabled" name="eventSubmit_doUnjoin" value="$tlang.getString("sitegen.siteinfolist.siteunjoin")"/>
 							</form>
-						</td>
-					</tr>
-				#end
+						
+						#end
+					#end
+					
+					</td>
+				</tr>
+				
 		    #end
 		
 			<tr>
