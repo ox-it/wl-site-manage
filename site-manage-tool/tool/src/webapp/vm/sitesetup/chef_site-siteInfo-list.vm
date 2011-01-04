@@ -124,6 +124,18 @@
 							</form>
 						</td>
 					</tr>
+				#else
+					<tr>
+						<th>
+							&nbsp;
+						</th>
+						<td>
+							<form name="unjoinSiteForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
+								<input type="hidden" name="itemReference" value="$siteId"/>
+								<input type="submit" disabled="disabled" name="eventSubmit_doUnjoin" value="$tlang.getString("sitegen.siteinfolist.siteunjoin")"/>
+							</form>
+						</td>
+					</tr>
 				#end
 		    #end
 		
