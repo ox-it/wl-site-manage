@@ -1475,28 +1475,14 @@ public class SiteAction extends PagedResourceActionII {
 			// make sure auto-updates are enabled
 			Hashtable views = new Hashtable();
 
-			// Allow a user to see their deleted sites.
-			if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
-				views.put(SiteConstants.SITE_TYPE_DELETED, rb.getString("java.sites.deleted"));
-				if (SiteConstants.SITE_TYPE_DELETED.equals((String) state.getAttribute(STATE_VIEW_SELECTED))) {
-					context.put("canSeeSoftlyDeletedSites", true);
-				}
-			}
-			
 			// top menu bar
 			Menu bar = new MenuImpl(portlet, data, (String) state
 					.getAttribute(STATE_ACTION));
 			context.put("menu", bar);
-			if (SiteService.allowAddSite(null) || SiteService.allowAddManagedSite()) {
-				bar.add(new MenuEntry(rb.getString("java.new"), "doNew_site"));
-			}
-			bar.add(new MenuEntry(rb.getString("java.revise"), null, true,
-					MenuItem.CHECKED_NA, "doGet_site", "sitesForm"));
-			bar.add(new MenuEntry(rb.getString("java.delete"), null, true,
-					MenuItem.CHECKED_NA, "doMenu_site_delete", "sitesForm"));
 
-			// If we're in the restore view
-			context.put("showRestore", SiteConstants.SITE_TYPE_DELETED.equals((String) state.getAttribute(STATE_VIEW_SELECTED)));
+			if (SiteConstants.SITE_TYPE_DELETED.equals(state.getAttribute(STATE_VIEW_SELECTED))) {
+				context.put("showRestore", true);
+			}
 
 			if (SecurityService.isSuperUser()) {
 				context.put("superUser", Boolean.TRUE);
@@ -1504,6 +1490,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("superUser", Boolean.FALSE);
 			}
 			views.put(SiteConstants.SITE_TYPE_ALL, rb.getString("java.allmy"));
+				
 			views.put(SiteConstants.SITE_TYPE_MYWORKSPACE, rb.getFormattedMessage("java.sites", new Object[]{rb.getString("java.my")}));
 			for (int sTypeIndex = 0; sTypeIndex < sTypes.size(); sTypeIndex++) {
 				String type = (String) sTypes.get(sTypeIndex);
@@ -1517,11 +1504,10 @@ public class SiteAction extends PagedResourceActionII {
 					views.put(mType, rb.getFormattedMessage("java.sites", new Object[]{mType}));
 				}
 			}
-				// Allow SuperUser to see all deleted sites.
-				if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
-					views.put(SiteConstants.SITE_TYPE_DELETED, rb.getString("java.sites.deleted"));
-				}
-
+			// Allow to see all deleted sites.
+			if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
+				views.put(SiteConstants.SITE_TYPE_DELETED, rb.getString("java.sites.deleted"));
+			}
 			// default view
 			if (state.getAttribute(STATE_VIEW_SELECTED) == null) {
 				state.setAttribute(STATE_VIEW_SELECTED, SiteConstants.SITE_TYPE_ALL);
