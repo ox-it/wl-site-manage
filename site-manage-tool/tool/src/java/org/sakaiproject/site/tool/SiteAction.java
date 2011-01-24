@@ -149,6 +149,8 @@ import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
 import org.sakaiproject.util.Web;
 
+import uk.ac.ox.oucs.vle.ProxyService;
+
 /**
  * <p>
  * SiteAction controls the interface for worksite setup.
@@ -2502,6 +2504,18 @@ public class SiteAction extends PagedResourceActionII {
 					.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_LIST));
 
 			context.put("homeToolId", TOOL_ID_HOME);
+			String rssUrl = ServerConfigurationService.getString("news.picker.url");
+			// Only enabled if we have a news picker url.
+			if (rssUrl != null) 
+			{
+				HttpServletRequest req = data.getRequest();
+				String headHtml = (String) req.getAttribute("sakai.html.head");
+				headHtml = headHtml==null?"":headHtml;
+				ProxyService proxyService = (ProxyService)ComponentManager.get(ProxyService.class.getName());
+				String proxyUrl = proxyService.getProxyURL(rssUrl) + "&filter=rssMedia(80,80)";
+				headHtml += SiteActionUtils.getPodcastPicker(proxyUrl);
+				req.setAttribute("sakai.html.head", headHtml);
+			}
 			
 			context.put("maxToolTitleLength", MAX_TOOL_TITLE_LENGTH);
 			
