@@ -178,32 +178,13 @@
 							#end 
 						</a>
 					</th>
-					#if($canSeeSoftlyDeletedSites)
-					<th id="restore">
-						<a href="#toolLinkParam("SiteAction" "doSort_sites" "criterion=$validator.escapeUrl($sortby_softlydeleted)")" title ="$tlang.getString('list.sortbysoftlydeleted')"> 
-							$tlang.getString("list.softlydeleted")
-							#if ($currentSortedBy.equals($sortby_softlydeleted))
-								#if ($currentSortAsc.equals("true")) 
-									<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString('list.sortbysoftlydeleted.asc')" alt ="$tlang.getString('list.sortbysoftlydeleted.asc')" /> 
-								#else 
-									<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString('list.sortbysoftlydeleted.desc')" alt ="$tlang.getString('list.sortbysoftlydeleted.desc')" /> 
-								#end 
-							#end 
-						</a>
-					</th>
-					#end
 				</tr>
 				#if($sites && $sites.size() != 0)
 					#set ($siteCount=0)
 					#foreach ($site in $sites)
 					#set ($siteCount=$siteCount + 1)
 						#set ($properties = $site.getProperties())
-
-						#if($site.SoftlyDeleted)
-							<tr class="siteListSoftlyDeleted">
-						#else
-							<tr>
-						#end							
+						<tr>
 							<td headers="checkbox" class="screenOnly">
 								#if ($service.allowUpdateSite($site.Id))
 									<input type="checkbox" name="selectedMembers" value="$validator.escapeHtml($site.getId())" id="site$siteCount" />
@@ -248,18 +229,6 @@
 								#set($createdTime = $!site.getCreatedTime())
 								$!createdTime.toStringLocalFull()
 							</td>
-							
-							#if($canSeeSoftlyDeletedSites)
-								<td headers="restore" class="siteListSoftlyDeletedRestore">
-									#if($site.SoftlyDeleted)
-										<a href="#toolLinkParam("SiteAction" "doSite_restore" "id=$site.id")" title ="$tlang.getString('list.restore')">
-											<input type="button" value="$tlang.getString('list.restore')" />
-										</a>
-									#else
-										&nbsp;
-									#end
-								</td>
-							#end
 						</tr>
 					#end
 				#end

@@ -1400,26 +1400,7 @@ public class SiteAction extends PagedResourceActionII {
 			String portalUrl = ServerConfigurationService.getPortalUrl();
 			context.put("portalUrl", portalUrl);
 
-			List<Site> allSites = prepPage(state);
-			
-			//filter softly deleted sites out of the list if user doesn't have permission
-			List<Site> sites = new ArrayList();
-			for(Site s: allSites){
-				if(s.isSoftlyDeleted()) {
-					if(unlockCheck(SiteService.SITE_VISIT_SOFTLY_DELETED, s.getReference())) {
-						
-						//if user can see one softly deleted site, also need to show the column
-						context.put("canSeeSoftlyDeletedSites", true);
-						
-						//add this site to the list
-						sites.add(s);
-					}
-				} else {
-					//not softly deleted, add site to the list
-					sites.add(s);
-				}
-			}
-			
+			List sites = prepPage(state);
 			state.setAttribute(STATE_SITES, sites);
 			context.put("sites", sites);
 
@@ -1441,7 +1422,6 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("sortby_createdby", SortType.CREATED_BY_ASC.toString());
 			context.put("sortby_publish", SortType.PUBLISHED_ASC.toString());
 			context.put("sortby_createdon", SortType.CREATED_ON_ASC.toString());
-			context.put("sortby_softlydeleted", SortType.SOFTLY_DELETED_ASC.toString());
 
 			// top menu bar
 			Menu bar = new MenuImpl(portlet, data, (String) state
@@ -1796,13 +1776,7 @@ public class SiteAction extends PagedResourceActionII {
 						if (SiteService.allowRemoveSite(id)) {
 							try {
 								Site removeSite = SiteService.getSite(id);
-								
-								//check site isn't already softly deleted
-								if(removeSite.isSoftlyDeleted() && !SecurityService.isSuperUser()) {
-									addAlert(state, rb.getString("softly.deleted.already"));
-								} else {
-									remove.add(removeSite);
-								}
+								remove.add(removeSite);
 							} catch (IdUnusedException e) {
 								M_log.warn(this + ".buildContextForTemplate chef_site-siteDeleteConfirm.vm: IdUnusedException", e);
 							}
@@ -1819,12 +1793,6 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 			context.put("removals", remove);
-			
-			//check if soft deletes are activated
-			if(ServerConfigurationService.getBoolean("site.soft.deletion", false) && !SecurityService.isSuperUser()) {
-				context.put("softDelete", true);
-			}
-			
 			return (String) getContext(data).get("template") + TEMPLATE[8];
 		case 10:
 			/*
@@ -4109,11 +4077,8 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (sortBy.equals(SortType.PUBLISHED_ASC.toString())) {
 				sortType = sortAsc ? SortType.PUBLISHED_ASC
 						: SortType.PUBLISHED_DESC;
-			} else if (sortBy.equals(SortType.SOFTLY_DELETED_ASC.toString())) {
-				sortType = sortAsc ? SortType.SOFTLY_DELETED_ASC
-						: SortType.SOFTLY_DELETED_DESC;
 			}
-			
+
 			if (SecurityService.isSuperUser()) {
 				// admin-type of user
 				String view = (String) state.getAttribute(STATE_VIEW_SELECTED);
@@ -4429,13 +4394,6 @@ public class SiteAction extends PagedResourceActionII {
 				.getStrings("selectedMembers"))); // Site id's of checked
 		// sites
 		if (!chosenList.isEmpty()) {
-			
-			boolean softDelete = false;
-			//WL-550 if soft site deletion is enabled and not a super user, softly delete the site
-			if(ServerConfigurationService.getBoolean("site.soft.deletion", softDelete) && !SecurityService.isSuperUser()) {
-				softDelete = true;
-			}
-			
 			for (ListIterator i = chosenList.listIterator(); i.hasNext();) {
 				String id = (String) i.next();
 				String site_title = NULL_STRING;
@@ -4451,16 +4409,7 @@ public class SiteAction extends PagedResourceActionII {
 					try {
 						Site site = SiteService.getSite(id);
 						site_title = site.getTitle();
-						//WL-550
-						if(softDelete) {
-							//set the attribute and update
-							site.setSoftlyDeleted(true);
-							SiteService.save(site);
-							M_log.debug("Removed site softly: " + site.getId());
-						} else {
-							SiteService.removeSite(site);
-							M_log.debug("Removed site: " + site.getId());
-						}
+						SiteService.removeSite(site);
 					} catch (IdUnusedException e) {
 						M_log.warn(this +".doSite_delete_confirmed - IdUnusedException " + id, e);
 						addAlert(state, rb.getString("java.sitewith") + " "
@@ -12317,45 +12266,5 @@ public class SiteAction extends PagedResourceActionII {
 	} // doUnjoin
 
 
-	
-	/**
-	 * Restore a softly deleted site
-	 * 
-	 */
-	public void doSite_restore(RunData data) {
-		SessionState state = ((JetspeedRunData) data) .getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-
-		// get the siteid
-		ParameterParser params = data.getParameters();
-		String id = params.getString("id");
-
-		try {
-			Site s = SiteService.getSite(id);
-
-			//check if softly deleted
-			if(!s.isSoftlyDeleted()){
-				M_log.warn("Tried to restore site that has not been marked for deletion: " + id);
-				return;
-		}
-
-		//reverse it
-		s.setSoftlyDeleted(false);
-		SiteService.save(s);
-
-		} catch (IdUnusedException e) {
-			M_log.warn("Error restoring site:" + id + ":" + e.getClass() + ":" + e.getMessage());
-			addAlert(state, rb.getString("softly.deleted.invalidsite"));
-		} catch (PermissionException e) {
-			M_log.warn("Error restoring site:" + id + ":" + e.getClass() + ":" + e.getMessage());
-			addAlert(state, rb.getString("softly.deleted.restore.nopermission"));
-		}
-	} // doSite_restore
-
-	private boolean unlockCheck(String lock, String resource){
-		if (SecurityService.unlock(lock, resource)){
-			return true;
-		}
-		return false;
-	}
 	
  }
