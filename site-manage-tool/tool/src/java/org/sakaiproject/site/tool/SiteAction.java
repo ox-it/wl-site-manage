@@ -2510,7 +2510,7 @@ public class SiteAction extends PagedResourceActionII {
 				String headHtml = (String) req.getAttribute("sakai.html.head");
 				headHtml = headHtml==null?"":headHtml;
 				ProxyService proxyService = (ProxyService)ComponentManager.get(ProxyService.class.getName());
-				String proxyUrl = proxyService.getProxyURL(rssUrl);
+				String proxyUrl = proxyService.getProxyURL(rssUrl) + "&filter=rssMedia(80,80)";
 				headHtml += SiteActionUtils.getPodcastPicker(proxyUrl);
 				req.setAttribute("sakai.html.head", headHtml);
 			}
