@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Stack;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -61,7 +60,6 @@ import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.PermissionsHelper;
 import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.authz.api.RoleAlreadyDefinedException;
-import org.sakaiproject.authz.api.RoleProvider;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.authz.cover.DevolvedSakaiSecurity;
@@ -73,6 +71,7 @@ import org.sakaiproject.cheftool.PortletConfig;
 import org.sakaiproject.cheftool.RunData;
 import org.sakaiproject.cheftool.VelocityPortlet;
 import org.sakaiproject.cheftool.api.Menu;
+import org.sakaiproject.cheftool.api.MenuItem;
 import org.sakaiproject.cheftool.menu.MenuEntry;
 import org.sakaiproject.cheftool.menu.MenuImpl;
 import org.sakaiproject.component.cover.ComponentManager;
@@ -110,8 +109,8 @@ import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.SiteService.SelectionType;
-import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
+import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.site.util.Participant;
 import org.sakaiproject.site.util.SiteComparator;
@@ -140,7 +139,6 @@ import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.user.cover.UserDirectoryService;
 import org.sakaiproject.util.ArrayUtil;
 import org.sakaiproject.util.FileItem;
-import org.sakaiproject.util.FormattedText;
 import org.sakaiproject.util.ParameterParser;
 import org.sakaiproject.util.RequestFilter;
 import org.sakaiproject.util.ResourceLoader;
@@ -1308,7 +1306,37 @@ public class SiteAction extends PagedResourceActionII {
 
 			// make sure auto-updates are enabled
 			Hashtable views = new Hashtable();
+
+			// Allow a user to see their deleted sites.
+			if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
+				views.put(rb.getString("java.sites.deleted"), rb.getString("java.sites.deleted"));
+				if (rb.getString("java.sites.deleted").equals((String) state.getAttribute(STATE_VIEW_SELECTED))) {
+					context.put("canSeeSoftlyDeletedSites", true);
+				}
+			}
+			
+			// top menu bar
+			Menu bar = new MenuImpl(portlet, data, (String) state
+					.getAttribute(STATE_ACTION));
+			context.put("menu", bar);
+			if (SiteService.allowAddSite(null) || SiteService.allowAddManagedSite()) {
+				bar.add(new MenuEntry(rb.getString("java.new"), "doNew_site"));
+			}
+			bar.add(new MenuEntry(rb.getString("java.revise"), null, true,
+					MenuItem.CHECKED_NA, "doGet_site", "sitesForm"));
+			bar.add(new MenuEntry(rb.getString("java.delete"), null, true,
+					MenuItem.CHECKED_NA, "doMenu_site_delete", "sitesForm"));
+			
+			if (rb.getString("java.sites.deleted").equals((String) state.getAttribute(STATE_VIEW_SELECTED))) {
+				bar.add(new MenuEntry(rb.getString("java.restore"), null, true, MenuItem.CHECKED_NA, "doMenu_site_restore", "sitesForm"));
+			}
+			
+			
 			if (SecurityService.isSuperUser()) {
+				// Allow SuperUser to see all deleted sites.
+				if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
+					views.put(rb.getString("java.sites.deleted"), rb.getString("java.sites.deleted"));
+				}
 				views.put(rb.getString("java.allmy"), rb
 						.getString("java.allmy"));
 				views.put(rb.getString("java.my") + " "
@@ -1370,6 +1398,11 @@ public class SiteAction extends PagedResourceActionII {
 							+ rb.getString("java.sites"), rb
 							.getString("java.gradtools"));
 				}
+				
+				// Allow a user to see their deleted sites.
+				if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
+					views.put(rb.getString("java.sites.deleted"), rb.getString("java.sites.deleted"));
+				}
 
 				// default view
 				if (state.getAttribute(STATE_VIEW_SELECTED) == null) {
@@ -1407,27 +1440,9 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("portalUrl", portalUrl);
 
 			List<Site> allSites = prepPage(state);
-			
-			//filter softly deleted sites out of the list if user doesn't have permission
-			List<Site> sites = new ArrayList();
-			for(Site s: allSites){
-				if(s.isSoftlyDeleted()) {
-					if(unlockCheck(SiteService.SITE_VISIT_SOFTLY_DELETED, s.getReference())) {
 						
-						//if user can see one softly deleted site, also need to show the column
-						context.put("canSeeSoftlyDeletedSites", true);
-						
-						//add this site to the list
-						sites.add(s);
-					}
-				} else {
-					//not softly deleted, add site to the list
-					sites.add(s);
-				}
-			}
-			
-			state.setAttribute(STATE_SITES, sites);
-			context.put("sites", sites);
+			state.setAttribute(STATE_SITES, allSites);
+			context.put("sites", allSites);
 
 			context.put("totalPageNumber", Integer.valueOf(totalPageNumber(state)));
 			context.put("searchString", state.getAttribute(STATE_SEARCH));
@@ -2930,7 +2945,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_siteInfo-editClass.vm
 			 * 
 			 */
-			Menu bar = new MenuImpl(portlet, data, (String) state
+			bar = new MenuImpl(portlet, data, (String) state
 					.getAttribute(STATE_ACTION));
 			if (SiteService.allowAddSite(null)) {
 				bar.add(new MenuEntry(rb.getString("java.addclasses"),
@@ -4149,6 +4164,15 @@ public class SiteAction extends PagedResourceActionII {
 										state
 												.getAttribute(GRADTOOLS_SITE_TYPES),
 										search, null);
+					} else if (view.equalsIgnoreCase(rb
+							.getString("java.sites.deleted"))) {
+						// search for gradtools sites
+						size = SiteService
+								.countSites(
+										org.sakaiproject.site.api.SiteService.SelectionType.ANY_DELETED,
+										state
+												.getAttribute(GRADTOOLS_SITE_TYPES),
+										search, null);
 					} else {
 						// search for specific type of sites
 						size = SiteService
@@ -4192,6 +4216,15 @@ public class SiteAction extends PagedResourceActionII {
 						size += SiteService
 								.countSites(
 										org.sakaiproject.site.api.SiteService.SelectionType.ACCESS,
+										state
+												.getAttribute(GRADTOOLS_SITE_TYPES),
+										search, null);
+					} else if (view.equalsIgnoreCase(rb
+							.getString("java.sites.deleted"))) {
+						// search for gradtools sites
+						size = SiteService
+								.countSites(
+										org.sakaiproject.site.api.SiteService.SelectionType.DELETED,
 										state
 												.getAttribute(GRADTOOLS_SITE_TYPES),
 										search, null);
@@ -4282,6 +4315,13 @@ public class SiteAction extends PagedResourceActionII {
 												.getAttribute(GRADTOOLS_SITE_TYPES),
 										search, null, sortType,
 										new PagingPosition(first, last));
+					} else if (view.equalsIgnoreCase(rb.getString("java.sites.deleted"))) {
+						return SiteService
+						.getSites(
+								org.sakaiproject.site.api.SiteService.SelectionType.ANY_DELETED,
+								null,
+								search, null, sortType,
+								new PagingPosition(first, last));
 					} else {
 						// search for a specific site
 						return SiteService
@@ -4335,7 +4375,13 @@ public class SiteAction extends PagedResourceActionII {
 														.getAttribute(GRADTOOLS_SITE_TYPES),
 												search, null, sortType,
 												new PagingPosition(first, last)));
-
+					} else if (view.equalsIgnoreCase(rb.getString("java.sites.deleted"))) {
+						return SiteService
+						.getSites(
+								org.sakaiproject.site.api.SiteService.SelectionType.DELETED,
+								null,
+								search, null, sortType,
+								new PagingPosition(first, last));
 					} else {
 						rv
 								.addAll(SiteService
@@ -4549,6 +4595,46 @@ public class SiteAction extends PagedResourceActionII {
 		state.setAttribute(STATE_TEMPLATE_INDEX, "8");
 
 	} // doMenu_site_delete
+	
+	/**
+	 * Restore a softly deleted site
+	 * 
+	 */
+	public void doMenu_site_restore(RunData data) {
+		SessionState state = ((JetspeedRunData) data) .getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		ParameterParser params = data.getParameters();
+
+		if (params.getStrings("selectedMembers") == null) {
+			addAlert(state, rb.getString("java.nosites"));
+			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+			return;
+		}
+
+		String[] toRestore = (String[]) params.getStrings("selectedMembers");
+
+		for (String siteId: toRestore) {
+			try {
+				Site s = SiteService.getSite(siteId);
+
+				//check if softly deleted
+				if(!s.isSoftlyDeleted()){
+					M_log.warn("Tried to restore site that has not been marked for deletion: " + siteId);
+					continue;
+				}
+
+				//reverse it
+				s.setSoftlyDeleted(false);
+				SiteService.save(s);
+
+			} catch (IdUnusedException e) {
+				M_log.warn("Error restoring site:" + siteId + ":" + e.getClass() + ":" + e.getMessage());
+				addAlert(state, rb.getString("softly.deleted.invalidsite"));
+			} catch (PermissionException e) {
+				M_log.warn("Error restoring site:" + siteId + ":" + e.getClass() + ":" + e.getMessage());
+				addAlert(state, rb.getString("softly.deleted.restore.nopermission"));
+			}
+		}
+	} // doSite_restore
 
 	public void doSite_delete_confirmed(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
@@ -4566,12 +4652,6 @@ public class SiteAction extends PagedResourceActionII {
 		// sites
 		if (!chosenList.isEmpty()) {
 			
-			boolean softDelete = false;
-			//WL-550 if soft site deletion is enabled and not a super user, softly delete the site
-			if(ServerConfigurationService.getBoolean("site.soft.deletion", softDelete) && !SecurityService.isSuperUser()) {
-				softDelete = true;
-			}
-			
 			for (ListIterator i = chosenList.listIterator(); i.hasNext();) {
 				String id = (String) i.next();
 				String site_title = NULL_STRING;
@@ -4579,16 +4659,8 @@ public class SiteAction extends PagedResourceActionII {
 					try {
 						Site site = SiteService.getSite(id);
 						site_title = site.getTitle();
-						//WL-550
-						if(softDelete) {
-							//set the attribute and update
-							site.setSoftlyDeleted(true);
-							SiteService.save(site);
-							M_log.debug("Removed site softly: " + site.getId());
-						} else {
-							SiteService.removeSite(site);
-							M_log.debug("Removed site: " + site.getId());
-						}
+						SiteService.removeSite(site);
+						M_log.debug("Removed site: " + site.getId());
 					} catch (IdUnusedException e) {
 						M_log.warn(this +".doSite_delete_confirmed - IdUnusedException " + id, e);
 						addAlert(state, rb.getFormattedMessage("java.couldnt", new Object[]{site_title,id}));
