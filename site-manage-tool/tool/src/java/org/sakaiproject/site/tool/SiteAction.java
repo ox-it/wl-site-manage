@@ -1309,6 +1309,10 @@ public class SiteAction extends PagedResourceActionII {
 			
 			
 			if (SecurityService.isSuperUser()) {
+				// Allow SuperUser to see all deleted sites.
+				if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
+					views.put(rb.getString("java.sites.deleted"), rb.getString("java.sites.deleted"));
+				}
 				views.put(rb.getString("java.allmy"), rb
 						.getString("java.allmy"));
 				views.put(rb.getString("java.my") + " "
