@@ -76,6 +76,8 @@ import org.sakaiproject.cheftool.menu.MenuEntry;
 import org.sakaiproject.cheftool.menu.MenuImpl;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
+import org.sakaiproject.content.api.ContentCopy;
+import org.sakaiproject.content.api.ContentCopyContext;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.coursemanagement.api.AcademicSession;
@@ -159,6 +161,8 @@ public class SiteAction extends PagedResourceActionII {
 	private static Log M_log = LogFactory.getLog(SiteAction.class);
 	
 	private ContentHostingService m_contentHostingService = (ContentHostingService) ComponentManager.get("org.sakaiproject.content.api.ContentHostingService");
+	
+	private ContentCopy contentCopy = (ContentCopy)ComponentManager.get(ContentCopy.class);
 
 	private ImportService importService = org.sakaiproject.importer.cover.ImportService
 			.getInstance();
@@ -8188,7 +8192,12 @@ public class SiteAction extends PagedResourceActionII {
 
 							// set title
 							site.setTitle(title);
-							
+							// Update the description and copy and related content.
+							ContentCopyContext context = contentCopy.createCopyContext(oSiteId, nSiteId, true);
+							String nDescription = contentCopy.convertContent(context, site.getDescription(), "text/html", null);
+							site.setDescription(nDescription);
+							contentCopy.copyReferences(context);
+
 							try {
 								SiteService.save(site);
 							
