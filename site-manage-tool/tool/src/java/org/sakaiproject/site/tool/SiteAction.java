@@ -9366,7 +9366,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 							// set title
 							site.setTitle(title);
 							// Update the description and copy and related content.
-							ContentCopyContext context = contentCopy.createCopyContext(oSiteId, nSiteId, true);
+							ContentCopyContext context = contentCopy.createCopyContext(oldSiteId, newSiteId, true);
 							String nDescription = contentCopy.convertContent(context, site.getDescription(), "text/html", null);
 							site.setDescription(nDescription);
 							contentCopy.copyReferences(context);
