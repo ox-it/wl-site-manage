@@ -31,6 +31,7 @@ import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.site.tool.helper.participant.rsf.AddViewParameters;
 import org.sakaiproject.site.tool.helper.participant.impl.SiteAddParticipantHandler;
+import org.sakaiproject.site.tool.helper.participant.impl.SiteAddParticipantHandler.ConfigOption;
 import org.sakaiproject.user.api.UserDirectoryService;
 
 import uk.ac.cam.caret.sakai.rsf.producers.FrameAdjustingProducer;
@@ -130,8 +131,7 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
 		}
     	
 		// non official participant
-    	String allowAddNonOfficialParticipant = handler.getServerConfigurationString("nonOfficialAccount", "true");
-    	if (allowAddNonOfficialParticipant.equalsIgnoreCase("true"))
+    	if (handler.isEnabled(ConfigOption.EXTERNAL_PARTICIPANTS))
     	{
     		UIInput.make(participantForm, "nonOfficialAccountParticipant", "#{siteAddParticipantHandler.nonOfficialAccountParticipant}", handler.nonOfficialAccountParticipant);
 	    	UIOutput.make(participantForm, "nonOfficialAccountSectionTitle", messageLocator.getMessage("nonOfficialAccountSectionTitle"));
