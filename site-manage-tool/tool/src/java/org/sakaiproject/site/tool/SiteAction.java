@@ -73,6 +73,7 @@ import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.authz.api.RoleAlreadyDefinedException;
 import org.sakaiproject.authz.api.RoleProvider;
 import org.sakaiproject.authz.api.SecurityAdvisor;
+import org.sakaiproject.authz.api.TwoFactorAuthentication;
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.authz.cover.DevolvedSakaiSecurity;
 import org.sakaiproject.authz.cover.SecurityService;
@@ -185,6 +186,9 @@ public class SiteAction extends PagedResourceActionII {
 
 	private ImportService importService = org.sakaiproject.importer.cover.ImportService
 			.getInstance();
+	
+	/** This is used to decide if a site should have cut down options. */
+	private TwoFactorAuthentication twoFactorAuthentication = (TwoFactorAuthentication) ComponentManager.get(TwoFactorAuthentication.class);
 
 	private static String showOrphanedMembers = ServerConfigurationService.getString("site.setup.showOrphanedMembers", "admins");
 
@@ -1982,6 +1986,9 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("allowUpdateSiteMembership", Boolean
 						.valueOf(allowUpdateSiteMembership));
 				
+				boolean allowAddProvidedGroups = allowUpdateSite && notSecureOrAdmin(site.getReference());
+				context.put("allowAddProvidedGroups", allowAddProvidedGroups);
+				
 				context.put("additionalAccess", getAdditionRoles(site));
 				
 				// Check if this site has an admin realm (site)
@@ -2006,7 +2013,7 @@ public class SiteAction extends PagedResourceActionII {
 					if (!isMyWorkspace) {
 						b.add(new MenuEntry(rb.getString("java.editsite"),
 								"doMenu_edit_site_info"));
-						if (DevolvedSakaiSecurity.canSetAdminRealm(site.getReference())) {
+						if (DevolvedSakaiSecurity.canSetAdminRealm(site.getReference()) && notSecureOrAdmin(site.getReference())) {
 							b.add(new  MenuEntry(rb.getString("java.changeadmin"),
 									"doMenu_change_site_admin"));
 						}
@@ -3558,6 +3565,18 @@ public class SiteAction extends PagedResourceActionII {
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 	}
 
+
+	/**
+	 * Is this site not secure or is the user an admin user.
+	 * This is useful for deciding if to disable functionality. 
+	 * @param reference A reference to ths site.
+	 * @return <code>true</code> if the user is an admin or the site is not secure.
+	 */
+	private boolean notSecureOrAdmin(String reference) {
+		return (SecurityService.isSuperUser() || !twoFactorAuthentication.isTwoFactorRequired(reference));
+	}
+
+
 	/**
 	 * Some site don't get the full set of options in Site Info.
 	 * @param state The session state.
@@ -3565,6 +3584,7 @@ public class SiteAction extends PagedResourceActionII {
 	 * @return <code>true</code> is the site is a restricted one.
 	 */
 	private boolean isRestrictedSite(SessionState state, String siteType) {
+		Site site = getStateSite(state);
 		List<String> providedSiteTypes = siteTypeProvider.getTypes();
 		boolean isRestrictedSite = false;
 		if (siteType != null && providedSiteTypes.contains(siteType)) {
@@ -3572,6 +3592,8 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		List adminSiteTypes = (List) state.getAttribute(ADMIN_SITE_TYPES);
 		if (siteType != null && adminSiteTypes.contains(siteType) && !SecurityService.isSuperUser()) {
+			isRestrictedSite = true;
+		} else if (site != null && !notSecureOrAdmin(site.getReference())) {
 			isRestrictedSite = true;
 		}
 		return isRestrictedSite;
@@ -4403,6 +4425,7 @@ public class SiteAction extends PagedResourceActionII {
 							}
 						}
 					}
+					
 					// set Attributes
 					state.setAttribute(ALL_ZIP_IMPORT_SITES, allzipList);
 					state.setAttribute(FINAL_ZIP_IMPORT_SITES, finalzipList);
@@ -15334,5 +15357,13 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 		}
 	} // doSite_restore
 
-}
-
+	/**
+	 * Just check if two factor authentication is required for this site.
+	 * @param site
+	 * @return
+	 */
+	private boolean isTwoFactorRequired(Site site) {
+		return twoFactorAuthentication.isTwoFactorRequired(site.getReference());
+	}
+	
+ }

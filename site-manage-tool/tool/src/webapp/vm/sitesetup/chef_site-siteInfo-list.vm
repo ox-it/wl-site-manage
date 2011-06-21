@@ -461,7 +461,7 @@ function printPreview(target){
 			</tr>
 		#end
 		</table>
-		#if ($allowUpdateSiteMembership)
+		#if ($allowAddProvidedGroups)
 		<div>
 		<form method="post" action="#toolForm("SiteAction")">
 			<input type="submit" name="eventSubmit_doExternalGroupsHelper" value="$tlang.getString("sitegen.siteinfolist.addextgroup")"/>
