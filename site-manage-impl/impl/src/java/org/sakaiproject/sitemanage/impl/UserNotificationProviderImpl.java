@@ -79,7 +79,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 			String headerTo = emailId;
 			String replyTo = emailId;
 			String message_subject = productionSiteName + " "
-					+ rb.getString("java.sitenoti");
+					+ getMessageForSite(site, rb, "java.sitenoti", null);
 			String content = "";
 			StringBuilder buf = new StringBuilder();
 			buf.setLength(0);
@@ -87,24 +87,24 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 			// email bnonOfficialAccounteen newly added nonOfficialAccount account
 			// and other users
 			buf.append(user.getDisplayName() + ":\n\n");
-			buf.append(rb.getFormattedMessage("java.addedsite", new Object[]{productionSiteName, site.getTitle(), userDirectoryService.getCurrentUser().getDisplayName()}) + "\n");
+			buf.append(getMessageForSite(site, rb, "java.addedsite", new Object[]{productionSiteName, site.getTitle(), userDirectoryService.getCurrentUser().getDisplayName()}) + "\n");
 			if (nonOfficialAccount) {
 				buf.append(serverConfigurationService.getString(
 						"nonOfficialAccountInstru", "")
 						+ "\n");
 
 				if (nonOfficialAccountUrl != null) {
-					buf.append(rb.getString("java.togeta1") + "\n"
+					buf.append(getMessageForSite(site, rb, "java.togeta1", null) + "\n"
 							+ nonOfficialAccountUrl + "\n");
-					buf.append(rb.getString("java.togeta2") + "\n\n");
+					buf.append(getMessageForSite(site, rb, "java.togeta2", null) + "\n\n");
 				}
-				buf.append(rb.getFormattedMessage("java.tolog", new Object[] {
+				buf.append(getMessageForSite(site, rb, "java.tolog", new Object[] {
 						site.getUrl(),
 						serverConfigurationService.getString("xlogin.text", "Login"),
 						site.getTitle()
 						}));
 			} else {
-				buf.append(rb.getFormattedMessage("java.tolog", new Object[] {
+				buf.append(getMessageForSite(site, rb, "java.tolog", new Object[] {
 						site.getUrl(),
 						serverConfigurationService.getString("login.text", "Login"),
 						site.getTitle()
@@ -131,8 +131,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 		String to = newUserEmail;
 		String headerTo = newUserEmail;
 		String replyTo = newUserEmail;
-		String message_subject = rb.getFormattedMessage("java.newusernoti",
-				new Object[]{productionSiteName});
+		String message_subject = getMessageForSite(site, rb, "java.newusernoti", new Object[]{productionSiteName});
 		String content = "";
 
 		if (from != null && newUserEmail != null) {
@@ -142,14 +141,14 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 			// email body
 			buf.append(user.getDisplayName() + ":\n\n");
 
-			buf.append(rb.getFormattedMessage("java.addedto", new Object[]{
-					productionSiteName,
-					productionSiteUrl,
-					userDirectoryService.getCurrentUser().getDisplayName()
-					})).append("\n\n");
-			buf.append(rb.getFormattedMessage("java.usernamedis", new Object[]{user.getEid()})).append('\n');
-			buf.append(rb.getFormattedMessage("java.passwordis", new Object[]{newUserPassword})).append('\n');;
-			buf.append(rb.getString("java.newuserfooter"));
+			buf.append(getMessageForSite(site, rb, "java.addedto", new Object[]{
+							productionSiteName,
+							productionSiteUrl,
+							userDirectoryService.getCurrentUser().getDisplayName()
+							})).append("\n\n");
+			buf.append(getMessageForSite(site, rb, "java.usernamedis", new Object[]{user.getEid()})).append('\n');
+			buf.append(getMessageForSite(site, rb, "java.passwordis", new Object[]{newUserPassword})).append('\n');;
+			buf.append(getMessageForSite(site, rb, "java.newuserfooter", new Object[]{}));
 			
 			content = buf.toString();
 			emailService.send(from, to, message_subject, content, headerTo,
@@ -178,5 +177,22 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 			M_log.warn(this + " - no 'setup.request' in configuration, using: "+ from);
 		}
 		return from;
+	}
+	
+	/**
+	 * Checks to see if there is a custom message for a specific site type and if not just uses the default
+	 * one. This allows you to have custom messages for course and project based site.
+	 * @param site The site in which the messages are being presented.
+	 * @param defaultKey The key to lookup in the resource bundle.
+	 * @param args The arguments to format the message with, if <code>null</code> then don't pass any.
+	 * @return The formatted message.
+	 */
+	private String getMessageForSite(Site site, ResourceLoader rb, String defaultKey, Object[] args) {
+		String siteType = site.getType();
+		String key = defaultKey + "."+ siteType;
+		if (!rb.getIsValid(key)) {
+			key = defaultKey;
+		}
+		return (args == null)?rb.getString(key):rb.getFormattedMessage(key, args);
 	}
 }
