@@ -8248,25 +8248,20 @@ public class SiteAction extends PagedResourceActionII {
 								
 								// save again
 								SiteService.save(site);
-								
-								if (siteType != null && siteType.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) 
+								// also remove the provider id attribute if any
+								String realm = SiteService.siteReference(site.getId());
+								try 
 								{
-									// also remove the provider id attribute if any
-									String realm = SiteService.siteReference(site.getId());
-									try 
-									{
-										AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
-										realmEdit.setProviderGroupId(null);
-										AuthzGroupService.save(realmEdit);
-									} catch (GroupNotDefinedException e) {
-										M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: IdUnusedException, not found, or not an AuthzGroup object "+ realm, e);
-										addAlert(state, rb.getString("java.realm"));
-									} catch (Exception e) {
-										addAlert(state, this + rb.getString("java.problem"));
-										M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.problem"), e);
-									}
+									AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
+									realmEdit.setProviderGroupId(null);
+									AuthzGroupService.save(realmEdit);
+								} catch (GroupNotDefinedException e) {
+									M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: IdUnusedException, not found, or not an AuthzGroup object "+ realm, e);
+									addAlert(state, rb.getString("java.realm"));
+								} catch (Exception e) {
+									addAlert(state, this + rb.getString("java.problem"));
+									M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.problem"), e);
 								}
-							
 							} catch (IdUnusedException e) {
 								M_log.warn(this + " actionForTemplate chef_siteinfo-duplicate:: IdUnusedException when saving " + nSiteId);
 							} catch (PermissionException e) {
