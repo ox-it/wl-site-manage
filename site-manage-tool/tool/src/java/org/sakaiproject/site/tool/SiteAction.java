@@ -9924,15 +9924,9 @@ public class SiteAction extends PagedResourceActionII {
 	 * @return
 	 */
 	private boolean notStealthOrHiddenTool(String toolId) {
-		return (ToolManager.getTool(toolId) != null
-		&& !ServerConfigurationService
-				.getString(
-						"stealthTools@org.sakaiproject.tool.api.ActiveToolManager")
-				.contains(toolId)
-		&& !ServerConfigurationService
-				.getString(
-						"hiddenTools@org.sakaiproject.tool.api.ActiveToolManager")
-				.contains(toolId));
+		Tool tool = ToolManager.getTool(toolId);
+		Set<Tool> tools = ToolManager.findTools(Collections.emptySet(), null);
+		return tool != null && tools.contains(tool);
 	}
 
 	/**
