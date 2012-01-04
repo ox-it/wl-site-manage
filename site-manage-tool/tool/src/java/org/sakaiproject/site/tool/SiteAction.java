@@ -2200,7 +2200,8 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_site-siteInfo-editInfo.vm
 			 * 
 			 */
-			if ((Boolean)state.getAttribute(STATE_ADMIN_REALM_FROM_USER)) {
+			Object fromAdmin = state.getAttribute(STATE_ADMIN_REALM_FROM_USER);
+			if (fromAdmin != null && (Boolean)(fromAdmin)) {
 				context.put("back", "63");
 			}
 			if (site != null) {
@@ -3774,6 +3775,8 @@ public class SiteAction extends PagedResourceActionII {
 	{
 		String helperId = ServerConfigurationService.getString(helperName, defaultHelperId);
 		
+		String siteType = (String)state.getAttribute(STATE_SITE_TYPE);
+		
 		// if the state variable regarding the helper is not set yet, set it with the configured helper id
 		if (state.getAttribute(stateHelperString) == null)
 		{
@@ -4579,7 +4582,7 @@ public class SiteAction extends PagedResourceActionII {
 						// course type
 						// skip the select site type step
 						setNewSiteType(state, siteType);
-						state.setAttribute(STATE_TEMPLATE_INDEX, "2");
+						state.setAttribute(STATE_TEMPLATE_INDEX, "13");
 					} else {
 						state.setAttribute(STATE_TEMPLATE_INDEX, "1");
 					}
@@ -5580,7 +5583,8 @@ public class SiteAction extends PagedResourceActionII {
 				} finally {
 					SecurityService.popAdvisor();
 				}
-
+			}
+			
 			SiteInfo siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			if (siteInfo != null) {
 				for (String role : siteInfo.additionalRoles) {
@@ -5706,7 +5710,6 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_SITE_MODE, SITE_MODE_HELPER_DONE);
 			}
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
-		}
 		}
 
 	}// doFinish
