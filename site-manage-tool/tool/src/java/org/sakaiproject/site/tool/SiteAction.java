@@ -1961,6 +1961,9 @@ public class SiteAction extends PagedResourceActionII {
 				{
 					context.put("siteJoinable", Boolean.valueOf(site.isJoinable()));
 				}
+				
+				// Is the current user a member
+				context.put("siteUserMember", site.getUserRole(UserDirectoryService.getCurrentUser().getId()) != null);
 
 				if (site.isPublished()) {
 					context.put("published", Boolean.TRUE);
