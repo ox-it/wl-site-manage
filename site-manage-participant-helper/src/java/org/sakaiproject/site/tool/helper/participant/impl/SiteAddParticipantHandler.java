@@ -868,7 +868,14 @@ public class SiteAddParticipantHandler {
 							// look for user based on eid first
 							u = userDirectoryService.getUserByEid(officialAccount);
 						} catch (UserNotDefinedException e) {
-							M_log.debug(this + ".checkAddParticipant: " + messageLocator.getMessage("java.username",officialAccount));
+							M_log.debug(this + ".checkAddParticipant: "+  messageLocator.getMessage("java.username", officialAccount));
+							try {
+								u = userDirectoryService.getUserByAid(officialAccount);
+							} catch (UserNotDefinedException unde) {
+								if (M_log.isDebugEnabled()) {
+									M_log.debug("Didn't find user with AID: "+ officialAccount);
+								}
+							}
 						}
 					}
 					else
@@ -879,6 +886,13 @@ public class SiteAddParticipantHandler {
 							u = userDirectoryService.getUserByEid(officialAccount);
 						} catch (UserNotDefinedException e) {
 							M_log.debug(this + ".checkAddParticipant: " + messageLocator.getMessage("java.username",officialAccount));
+							try {
+								u = userDirectoryService.getUserByAid(officialAccount);
+							} catch (UserNotDefinedException unde) {
+								if (M_log.isDebugEnabled()) {
+									M_log.debug("Didn't find user with AID: "+ officialAccount);
+								}
+							}
 						}
 						
 						//Changed user lookup to satisfy BSP-1010 (jholtzman)
@@ -892,13 +906,6 @@ public class SiteAddParticipantHandler {
 								if(usersWithEmail.size() == 0) {
 									// If the collection is empty, we didn't find any users with this email address
 									M_log.debug("Unable to find users with email " + officialAccount);
-									try {
-										u = userDirectoryService.getUserByAid(officialAccount);
-									} catch (UserNotDefinedException unde) {
-										if (M_log.isDebugEnabled()) {
-											M_log.debug("Didn't find user with AID: "+ officialAccount);
-										}
-									}
 								} else if (usersWithEmail.size() == 1) {
 									if (u == null)
 									{
