@@ -1989,7 +1989,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("allowUpdateSiteMembership", Boolean
 						.valueOf(allowUpdateSiteMembership));
 				
-				boolean allowAddProvidedGroups = allowUpdateSite && notSecureOrAdmin(site.getReference());
+				boolean allowAddProvidedGroups = allowUpdateSiteMembership && notSecureOrAdmin(site.getReference());
 				context.put("allowAddProvidedGroups", allowAddProvidedGroups);
 				
 				context.put("additionalAccess", getAdditionRoles(site));
