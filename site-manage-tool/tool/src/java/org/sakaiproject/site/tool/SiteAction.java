@@ -2166,11 +2166,11 @@ public class SiteAction extends PagedResourceActionII {
 					// Show groups in there.
 					prepareGroupsIntoContext(state, context, site);
 				}
-				if (ServerConfigurationService.getBoolean("wsetup.group.support.summary", true)) {
+				
+				if (ServerConfigurationService.getBoolean("wsetup.group.support.summary", true))
+				{
 					if ((allowUpdateSite || allowUpdateGroupMembership) 
-							&& (!isMyWorkspace
-									&& (ServerConfigurationService.getString("wsetup.group.support") == "" 
-									|| ServerConfigurationService.getString("wsetup.group.support").equalsIgnoreCase(Boolean.TRUE.toString())))) 
+							&& (!isMyWorkspace && ServerConfigurationService.getBoolean("wsetup.group.support", true))) 
 					{
 						// show all site groups
 						context.put("groups", site.getGroups());
