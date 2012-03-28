@@ -2166,19 +2166,20 @@ public class SiteAction extends PagedResourceActionII {
 					// Show groups in there.
 					prepareGroupsIntoContext(state, context, site);
 				}
-				
-				if ((allowUpdateSite || allowUpdateGroupMembership) 
-						&& (!isMyWorkspace
-							&& (ServerConfigurationService.getString("wsetup.group.support") == "" 
-							|| ServerConfigurationService.getString("wsetup.group.support").equalsIgnoreCase(Boolean.TRUE.toString())))) 
-				{
-					// show all site groups
-					context.put("groups", site.getGroups());
-				}
-				else
-				{
-					// show groups that the current user is member of
-					context.put("groups", site.getGroupsWithMember(UserDirectoryService.getCurrentUser().getId()));
+				if (ServerConfigurationService.getBoolean("wsetup.group.support.summary", true)) {
+					if ((allowUpdateSite || allowUpdateGroupMembership) 
+							&& (!isMyWorkspace
+									&& (ServerConfigurationService.getString("wsetup.group.support") == "" 
+									|| ServerConfigurationService.getString("wsetup.group.support").equalsIgnoreCase(Boolean.TRUE.toString())))) 
+					{
+						// show all site groups
+						context.put("groups", site.getGroups());
+					}
+					else
+					{
+						// show groups that the current user is member of
+						context.put("groups", site.getGroupsWithMember(UserDirectoryService.getCurrentUser().getId()));
+					}
 				}
 			} catch (Exception e) {
 				M_log.warn(this + " buildContextForTemplate chef_site-siteInfo-list.vm ", e);
