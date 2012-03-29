@@ -1885,6 +1885,7 @@ public class SiteAction extends PagedResourceActionII {
 				if (unJoinableSiteTypes != null && !unJoinableSiteTypes.contains(siteType))
 				{
 					context.put("siteJoinable", Boolean.valueOf(site.isJoinable()));
+					context.put("allowUnjoin", SiteService.allowUnjoinSite(site.getId()));
 				}
 				
 				// Is the current user a member
