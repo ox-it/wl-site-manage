@@ -10620,8 +10620,8 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 				
 				for(Role role:realm.getRoles())
 				{
-					if (permissionAllowedRoleIds == null 
-							|| permissionAllowedRoleIds!= null && !permissionAllowedRoleIds.contains(role.getId()))
+					if (isUserRole(role) && (permissionAllowedRoleIds == null 
+							|| permissionAllowedRoleIds!= null && !permissionAllowedRoleIds.contains(role.getId())))
 					{
 						// bjones86 - SAK-23257
 						if (allowedRoles != null && allowedRoles.contains(role)) {
