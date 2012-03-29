@@ -9386,8 +9386,8 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				for(Role role:realm.getRoles())
 				{
-					if (permissionAllowedRoleIds == null 
-							|| permissionAllowedRoleIds!= null && !permissionAllowedRoleIds.contains(role.getId()))
+					if (isUserRole(role) && (permissionAllowedRoleIds == null 
+							|| permissionAllowedRoleIds!= null && !permissionAllowedRoleIds.contains(role.getId())))
 					{
 						roles.add(role);
 					}
