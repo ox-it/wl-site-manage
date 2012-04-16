@@ -21,6 +21,10 @@ package org.sakaiproject.site.tool;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -8587,13 +8591,22 @@ public class SiteAction extends PagedResourceActionII {
 	private String transferSiteResource(String oSiteId, String nSiteId, String siteAttribute) {
 		String rv = "";
 		
-		String accessUrl = ServerConfigurationService.getAccessUrl();
-		if (siteAttribute!= null && siteAttribute.indexOf(oSiteId) != -1 && accessUrl != null)
+		String access = ServerConfigurationService.getAccessUrl();
+		if (siteAttribute!= null && siteAttribute.indexOf(oSiteId) != -1 && access != null)
 		{
-			// stripe out the access url, get the relative form of "url"
-			Reference ref = EntityManager.newReference(siteAttribute.replaceAll(accessUrl, ""));
+			Reference ref = null;
 			try
 			{
+				URI accessUrl = new URI(access);
+				URI url = new URI(siteAttribute);
+				String path = url.getPath();
+				String accessPath = accessUrl.getPath();
+				
+				// stripe out the access url, get the relative form of "url"
+				String contentRef = path.replaceAll(accessPath, "");
+				
+				ref = EntityManager.newReference(contentRef);
+				
 				ContentResource resource = m_contentHostingService.getResource(ref.getId());
 				// the new resource
 				ContentResource nResource = null;
@@ -8618,6 +8631,10 @@ public class SiteAction extends PagedResourceActionII {
 				// get the new resource url
 				rv = nResource != null?nResource.getUrl(false):"";
 				
+			}
+			catch (URISyntaxException use)
+			{
+				M_log.warn("Couldn't update site resource: "+ siteAttribute + " "+ use.getMessage());
 			}
 			catch (Exception refException)
 			{
