@@ -1,5 +1,5 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-list.vm,v 1.3 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
-<script type="text/javascript" src="/library/js/jquery-ui-latest/js/jquery.min.js"></script>
+<script type="text/javascript" src="/library/js/jquery/1.4.2/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="/library/js/jquery-ui-latest/js/jquery-ui.min.js"></script>
 <link type="text/css" href="/library/js/jquery-ui-latest/css/smoothness/jquery-ui.css" rel="stylesheet" media="screen" />
 <script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage.js"></script>
@@ -9,16 +9,25 @@
     $(document).ready(function(){
 		sakai.getSiteInfo('getSiteDesc','dialog','$tlang.getString("sitegen.siteinfolist.nosd")','$tlang.getString("sitegen.siteinfolist.nold")');
 		sakai.setupSelectList('siteList','toggleAllSelected','selectedSelected');
-		$('.siteSelectCheckbox').click(function(){
-			if($('.siteSelectCheckbox:checked').length >= 1){
-				$('#actionToolBar .realToolBarLink').show();
-				$('#actionToolBar .dummyToolBarLink').hide();
+		$(".actionToolBar .onselected").each(
+			function() {
+				$(this).data("original", $(this).html()); // Save the original contents.
+				$("a", this).replaceWith( function() {
+					return $(this).contents();
+				});
 			}
-			else{
-				$('#actionToolBar .realToolBarLink').hide();
-				$('#actionToolBar .dummyToolBarLink').show();
-			}
-		})
+		);
+		$("input[name=selectedMembers]").change( function(){
+			var disable = $("input[name=selectedMembers]:checked").size() == 0;
+			$(".actionToolBar .onselected").each(function() {
+				$(this).html($(this).data("original")); // Restore original content.
+				if (disable) {
+					$("a", this).replaceWith( function() {
+						return $(this).contents();
+					});
+				}
+			});
+		});
     });
 </script>
 <div class ="portletBody">
@@ -26,10 +35,8 @@
 		#if($allowAddSite)
 			<li class="firstToolBarItem"><span><a href="#toolLink("$action" "doNew_site")" title="$tlang.getString('java.new')">$tlang.getString("java.new")</a></span></li>
 		#end
-		<li class="dummyToolBarLink"><span class="current">$tlang.getString("java.revise")</span></li>
-		<li class="dummyToolBarLink"><span class="current">$tlang.getString("java.delete")</span></li>
-		<li style="display:none" class="realToolBarLink"><span><a href="" onclick="document.getElementById('sakai_action').value='doGet_site';document.getElementById('sitesForm').submit();return false;" title="$tlang.getString('java.revise')">$tlang.getString("java.revise")</a></span></li>
-		<li style="display:none" class="realToolBarLink"><span><a href="" onclick="javascript:document.getElementById('sakai_action').value='doMenu_site_delete';document.getElementById('sitesForm').submit();return false;" title="$tlang.getString('java.delete')">$tlang.getString("java.delete")</span></a></li>
+		<li class="onselected"><span><a href="" onclick="document.getElementById('sakai_action').value='doGet_site';document.getElementById('sitesForm').submit();return false;" title="$tlang.getString('java.revise')">$tlang.getString("java.revise")</a></span></li>
+		<li class="onselected"><span><a href="" onclick="javascript:document.getElementById('sakai_action').value='doMenu_site_delete';document.getElementById('sitesForm').submit();return false;" title="$tlang.getString('java.delete')">$tlang.getString("java.delete")</span></a></li>
 	</ul>
 
 	<div class="navIntraToolLink viewNav">

@@ -111,46 +111,24 @@ sakai.setupMessageListener = function(messageHolder, messageMode){
  args: id of table, id of select all checkbox, highlight row class
  */
 sakai.setupSelectList = function(list, allcontrol, highlightClass){
-    $('#' + list + ' :checked').parent("td").parent("tr").addClass(highlightClass);
+    // Hide control if no rows contain checkboxes
+    $('#' + allcontrol).toggle($('#' + list + ' td :checkbox').length !== 0);
     
-    if ($('#' + list + ' td :checkbox').length === 0) {
-        $('#' + allcontrol).hide();
-    }
-    $('#' + allcontrol).click(function(){
-        if (this.checked) {
-            $('#' + list + ' :checkbox').attr('checked', 'checked');
-            $('#' + list + ' :checkbox').parent('td').parent('tr').addClass(highlightClass);
-        }
-        else {
-            $('#' + list + ' :checkbox').attr('checked', '');
-            $('#' + list + ' tbody tr').removeClass(highlightClass);
-        }
+    // When a checkbox is changed.
+    $('#' + list + ' td :checkbox').change(function(){
+    	// Toggle the highlight class
+        $(this).closest("tr").toggleClass(highlightClass, this.checked);
+        // Update the all control.
+        var rowCheckboxes = $('#' + list + ' td :checkbox');
+        $('#' + allcontrol).attr('checked', (rowCheckboxes.length === rowCheckboxes.filter(':checked').length)?'checked':'');
     });
     
-    $('#' + list + ' :checkbox').click(function(){
-        var someChecked = false;
-        if (this.checked) {
-            $(this).parents('tr').addClass(highlightClass);
-        }
-        else {
-            $(this).parents('tr').removeClass(highlightClass);
-        }
-        $('#' + list + ' :checkbox').each(function(){
-            if (this.checked) {
-                someChecked = true;
-            }
-        });
-        if (!someChecked) {
-            $('#' + allcontrol).attr('checked', '');
-        }
-        if ($('#' + list + ' :checked').length !== $('#' + list + ' :checkbox').length) {
-            $('#' + allcontrol).attr('checked', '');
-        }
-        
-        if ($('#' + list + '  :checked').length === $('#' + list + '  :checkbox').length) {
-            $('#' + allcontrol).attr('checked', 'checked');
-        }
+    // When the all control is changed.
+    $('#' + allcontrol).change(function() {
+    	// We trigger the change so the highlight gets updated.
+    	$('#' + list + ' td :checkbox').attr("checked", this.checked).change();
     });
+    
 };
 
 sakai.siteTypeSetup = function(){
