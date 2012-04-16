@@ -1335,11 +1335,9 @@ public class SiteAction extends PagedResourceActionII {
 			bar.add(new MenuEntry(rb.getString("java.delete"), null, true,
 					MenuItem.CHECKED_NA, "doMenu_site_delete", "sitesForm"));
 			
-			if (rb.getString("java.sites.deleted").equals((String) state.getAttribute(STATE_VIEW_SELECTED))) {
-				bar.add(new MenuEntry(rb.getString("java.restore"), null, true, MenuItem.CHECKED_NA, "doMenu_site_restore", "sitesForm"));
-			}
-			
-			
+			// If we're in the restore view
+			context.put("showRestore", rb.getString("java.sites.deleted").equals((String) state.getAttribute(STATE_VIEW_SELECTED)));
+
 			if (SecurityService.isSuperUser()) {
 				// Allow SuperUser to see all deleted sites.
 				if (ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
