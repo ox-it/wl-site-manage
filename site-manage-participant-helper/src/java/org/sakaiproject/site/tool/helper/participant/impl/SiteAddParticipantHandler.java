@@ -841,7 +841,7 @@ public class SiteAddParticipantHandler {
 									// multiple matches
 									for (User user : usersWithEmail)
 									{
-										String eid = user.getEid();
+										String eid = user.getDisplayId();
 										eidsForAllMatches.append(eid).append("\n");
 										eidsForAllMatchesAlertBuffer.append(eid).append(", ");
 										
