@@ -11064,7 +11064,8 @@ public class SiteAction extends PagedResourceActionII {
 					} else {
 						if (!Validator.checkEmailLocal(emailId)) {
 							addAlert(state, rb.getString("java.theemail"));
-						} else if (!AliasService.allowSetAlias(emailId, channelReference )) {
+							// If siteId isn't set yet
+						} else if (siteId != null && !AliasService.allowSetAlias(emailId, channelReference )) {
 							addAlert(state, rb.getString("java.addalias"));
 						} else {
 							// check to see whether the alias has been used by
