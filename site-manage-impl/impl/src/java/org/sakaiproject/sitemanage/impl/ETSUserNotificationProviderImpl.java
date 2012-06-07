@@ -71,24 +71,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	public void init() {
 		//nothing realy to do
 		M_log.info("init()");
-		
-		
-		//do we need to load data?
-		Map<String, String> replacementValues = new HashMap<String, String>();
-		
-		// put placeholders for replacement values 
-		replacementValues.put("userName", "");
-        replacementValues.put("userEid", "");
-        replacementValues.put("localSakaiName", "");
-        replacementValues.put("currentUserName", "");
-        replacementValues.put("currentUserDisplayName", "");
-        replacementValues.put("localSakaiURL", "");
-        replacementValues.put("siteName", "");
-        replacementValues.put("productionSiteName", "");
-        replacementValues.put("newNonOfficialAccount", "false");
-        replacementValues.put("newPassword", "");
-        replacementValues.put("productionSiteName", "");
-        
+		        
         loadAddedParticipantMail();
         
         loadNewUserMail();
@@ -125,8 +108,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 			 Map<String, String> replacementValues = new HashMap<String, String>();
 	            replacementValues.put("userName", user.getDisplayName());
 	            replacementValues.put("userEid", user.getEid());
-	            replacementValues.put("localSakaiName",serverConfigurationService.getString(
-	    				"ui.service", ""));
+	            replacementValues.put("localSakaiName", productionSiteName);
 	            replacementValues.put("currentUserName",userDirectoryService.getCurrentUser().getDisplayName());
 	            replacementValues.put("localSakaiUrl", serverConfigurationService.getPortalUrl());
 	            String nonOfficialAccountUrl = serverConfigurationService.getString("nonOfficialAccount.url", null);
@@ -135,6 +117,9 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            replacementValues.put("siteName", site.getTitle());
 	            replacementValues.put("productionSiteName", productionSiteName);
 	            replacementValues.put("newNonOfficialAccount", Boolean.valueOf(newNonOfficialAccount).toString().toLowerCase());
+	            replacementValues.put("xloginText", serverConfigurationService.getString("xlogin.text", "Login"));
+	            replacementValues.put("loginText", serverConfigurationService.getString("login.text", "Login"));
+	            replacementValues.put("siteUrl", site.getUrl());
 	         
 	            M_log.debug("getting template: sitemange.notifyAddedParticipant");
 	            RenderedTemplate template = null;
@@ -144,7 +129,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 					return;	
 	           }
 	           catch (Exception e) {
-	        	   e.printStackTrace();
+	        	   M_log.error("Failed to render template: "+ e.getMessage(), e);
 	        	   return;
 	           }
 			List<String> headers = new ArrayList<String>();
