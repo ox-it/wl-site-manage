@@ -6708,6 +6708,10 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 				
 				// publish the site or not based on the template choice
 				site.setPublished(state.getAttribute(STATE_TEMPLATE_PUBLISH) != null?true:false);
+
+				// Update the icons URL.
+				String newSiteIconUrl = transferSiteResource(templateSite.getId(), site.getId(), site.getIconUrl());
+				site.setIconUrl(newSiteIconUrl);
 				
 				userNotificationProvider.notifyTemplateUse(templateSite, UserDirectoryService.getCurrentUser(), site);	
 			}
@@ -9832,6 +9836,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 				try
 				{
 					nResource = m_contentHostingService.getResource(nResourceId);
+					rv = nResource.getUrl();
 				}
 				catch (Exception n2Exception)
 				{
@@ -14976,7 +14981,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 			siteInfo.site_type = templateSite.getType();
 			siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
 			siteInfo.term = StringUtils.trimToNull(params.getString("selectTermTemplate"));
-			siteInfo.iconUrl = templateSite.getIconUrl();
+			siteInfo.iconUrl = templateSite.getIconUrl(); // If it's inside the site we'll change it when we make the copy
 			// description is site-specific. Shouldn't come from template
 			// siteInfo.description = templateSite.getDescription();
 			siteInfo.short_description = templateSite.getShortDescription();
