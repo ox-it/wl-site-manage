@@ -13278,7 +13278,7 @@ public class SiteAction extends PagedResourceActionII {
 			siteInfo.site_type = templateSite.getType();
 			siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
 			siteInfo.term = StringUtils.trimToNull(params.getString("selectTermTemplate"));
-			siteInfo.iconUrl = templateSite.getIconUrl();
+			siteInfo.iconUrl = templateSite.getIconUrl(); // If it's inside the site we'll change it when we make the copy
 			siteInfo.description = templateSite.getDescription();
 			siteInfo.short_description = templateSite.getShortDescription();
 			siteInfo.joinable = templateSite.isJoinable();
