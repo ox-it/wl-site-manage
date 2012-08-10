@@ -8619,6 +8619,7 @@ public class SiteAction extends PagedResourceActionII {
 				try
 				{
 					nResource = m_contentHostingService.getResource(nResourceId);
+					rv = nResource.getUrl();
 				}
 				catch (Exception n2Exception)
 				{
