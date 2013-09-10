@@ -9929,6 +9929,11 @@ public class SiteAction extends PagedResourceActionII {
 		
 		if (attributes != null)
 		{
+			// Adds a default value for the Web Content Tool to popup by default, avoids blocking mixed content.
+			if (WEB_CONTENT_TOOL_ID.equals(tool.getToolId())) {
+				attributes.put("popup", "true");
+			}
+
 			for(Map.Entry<String, String> attributeEntry : attributes.entrySet())
 			{
 				String attribute = attributeEntry.getKey();
