@@ -11067,6 +11067,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 						// other tools with default title
 						page.setTitle(toolRegFound.getTitle());
 					}
+
 					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
 
 					// if so specified in the tool's registration file, 
@@ -11085,6 +11086,12 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 						tool.setTitle((String) multipleToolIdTitleMap.get(toolId));
 						// save tool configuration
 						saveMultipleToolConfiguration(state, tool, toolId);
+
+						// Sets the Web Content Tool to popup by default, avoids blocking mixed content.
+						if (WEB_CONTENT_TOOL_ID.equals(tool.getToolId())) {
+							page.setPopup(true);
+							tool.getPlacementConfig().setProperty("popup", "true");
+						}
 					} else {
 						tool.setTitle(toolRegFound.getTitle());
 					}
