@@ -9822,7 +9822,14 @@ public class SiteAction extends PagedResourceActionII {
 						// other tools with default title
 						page.setTitle(toolRegFound.getTitle());
 					}
+
 					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+
+					// When adding Web Content force page popup by default to prevent blocked mixed content
+					if (WEB_CONTENT_TOOL_ID.equals(toolRegFound.getId())) {
+						page.setPopup(true);
+					}
+
 					ToolConfiguration tool = page.addTool();
 					tool.setTool(toolRegFound.getId(), toolRegFound);
 					addPage.toolId = toolId;
