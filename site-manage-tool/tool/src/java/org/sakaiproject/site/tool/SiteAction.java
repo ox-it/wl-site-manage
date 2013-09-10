@@ -9824,12 +9824,6 @@ public class SiteAction extends PagedResourceActionII {
 					}
 
 					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
-
-					// When adding Web Content force page popup by default to prevent blocked mixed content
-					if (WEB_CONTENT_TOOL_ID.equals(toolRegFound.getId())) {
-						page.setPopup(true);
-					}
-
 					ToolConfiguration tool = page.addTool();
 					tool.setTool(toolRegFound.getId(), toolRegFound);
 					addPage.toolId = toolId;
@@ -9841,6 +9835,12 @@ public class SiteAction extends PagedResourceActionII {
 						tool.setTitle((String) multipleToolIdTitleMap.get(toolId));
 						// save tool configuration
 						saveMultipleToolConfiguration(state, tool, toolId);
+
+						// Sets the Web Content Tool to popup by default, avoids blocking mixed content.
+						if (WEB_CONTENT_TOOL_ID.equals(tool.getToolId())) {
+							page.setPopup(true);
+							tool.getPlacementConfig().setProperty("popup", "true");
+						}
 					} else {
 						tool.setTitle(toolRegFound.getTitle());
 					}
