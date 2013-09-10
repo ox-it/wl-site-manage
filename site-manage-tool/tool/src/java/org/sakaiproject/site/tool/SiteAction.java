@@ -9826,7 +9826,7 @@ public class SiteAction extends PagedResourceActionII {
 					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
 
 					// When adding Web Content force page popup by default to prevent blocked mixed content
-					if (toolId.equals(WEB_CONTENT_TOOL_ID)) {
+					if (WEB_CONTENT_TOOL_ID.equals(toolRegFound.getId())) {
 						page.setPopup(true);
 					}
 
