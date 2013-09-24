@@ -5669,7 +5669,7 @@ public class SiteAction extends PagedResourceActionII {
 				site.setPublished(state.getAttribute(STATE_TEMPLATE_PUBLISH) != null?true:false);
 
 				// Update the icons URL.
-				String newSiteIconUrl = transferSiteResource(templateSite.getId(), site.getId(), site.getIconUrl());
+				String newSiteIconUrl = site.getIconUrl().replaceAll(templateSite.getId(), site.getId());
 				site.setIconUrl(newSiteIconUrl);
 				
 				sendTemplateUseNotification(site, UserDirectoryService.getCurrentUser(), templateSite);	
