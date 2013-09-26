@@ -203,6 +203,12 @@ public class SiteAction extends PagedResourceActionII {
 	private static org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService questionService = (org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService) ComponentManager
 	.get(org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService.class);
 	
+	private static final SecurityAdvisor SECURITY_ADVISOR_ALLOW_ALL = new SecurityAdvisor() {
+		public SecurityAdvice isAllowed(String userId, String function, String reference) {
+			return SecurityAdvice.ALLOWED;
+		}
+	};
+
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
 	private static final String SITE_MODE_SITEINFO = "siteinfo";
@@ -5669,7 +5675,8 @@ public class SiteAction extends PagedResourceActionII {
 				site.setPublished(state.getAttribute(STATE_TEMPLATE_PUBLISH) != null?true:false);
 
 				// Update the icons URL.
-				String newSiteIconUrl = site.getIconUrl().replaceAll(templateSite.getId(), site.getId());
+				Boolean bypassSecurity = true;
+				String newSiteIconUrl = transferSiteResource(templateSite.getId(), site.getId(), site.getIconUrl(), bypassSecurity);
 				site.setIconUrl(newSiteIconUrl);
 				
 				sendTemplateUseNotification(site, UserDirectoryService.getCurrentUser(), templateSite);	
@@ -8584,6 +8591,32 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
+	/** * This extends transferSiteResource to optionally grant security authority to transfer resources.
+	 * For tasks like copying resources from a template.
+	 *
+	 * @param oSiteId
+	 * @param nSiteId
+	 * @param siteAttribute
+	 * @param bypassSecurity - set to true if we want to bypass security
+	 * @return the new migrated resource url
+	 */
+	private String transferSiteResource(String oSiteId, String nSiteId, String siteAttribute, Boolean bypassSecurity) {
+
+		String resourceUrl;
+
+		if (bypassSecurity != null && bypassSecurity) {
+			SecurityService.pushAdvisor(SECURITY_ADVISOR_ALLOW_ALL);
+		}
+
+		resourceUrl = transferSiteResource(oSiteId, nSiteId, siteAttribute);
+
+		if (bypassSecurity != null && bypassSecurity) {
+			SecurityService.popAdvisor();
+		}
+
+		return resourceUrl;
+	}
+
 	/**
 	 * This is used to update exsiting site attributes with encoded site id in it. A new resource item is added to new site when needed
 	 * 
@@ -8671,15 +8704,9 @@ public class SiteAction extends PagedResourceActionII {
 		{
 			// importing from template, bypass the permission checking:
 			// temporarily allow the user to read and write from assignments (asn.revise permission)
-	        SecurityService.pushAdvisor(new SecurityAdvisor()
-	            {
-	                public SecurityAdvice isAllowed(String userId, String function, String reference)
-	                {
-	                    return SecurityAdvice.ALLOWED;
-	                }
-	            });
+			SecurityService.pushAdvisor(SECURITY_ADVISOR_ALLOW_ALL);
 		}
-				
+
 		List pageList = site.getPages();
 		Set<String> toolsCopied = new HashSet<String>();
 		
