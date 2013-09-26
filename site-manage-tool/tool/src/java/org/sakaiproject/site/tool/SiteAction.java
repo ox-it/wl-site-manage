@@ -5675,10 +5675,9 @@ public class SiteAction extends PagedResourceActionII {
 				site.setPublished(state.getAttribute(STATE_TEMPLATE_PUBLISH) != null?true:false);
 
 				// Update the icons URL.
-				Boolean bypassSecurity = true;
-				String newSiteIconUrl = transferSiteResource(templateSite.getId(), site.getId(), site.getIconUrl(), bypassSecurity);
+				String newSiteIconUrl = transferSiteResource(templateSite.getId(), site.getId(), site.getIconUrl());
 				site.setIconUrl(newSiteIconUrl);
-				
+
 				sendTemplateUseNotification(site, UserDirectoryService.getCurrentUser(), templateSite);	
 			}
 				
@@ -8591,32 +8590,6 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
-	/** * This extends transferSiteResource to optionally grant security authority to transfer resources.
-	 * For tasks like copying resources from a template.
-	 *
-	 * @param oSiteId
-	 * @param nSiteId
-	 * @param siteAttribute
-	 * @param bypassSecurity - set to true if we want to bypass security
-	 * @return the new migrated resource url
-	 */
-	private String transferSiteResource(String oSiteId, String nSiteId, String siteAttribute, Boolean bypassSecurity) {
-
-		String resourceUrl;
-
-		if (bypassSecurity != null && bypassSecurity) {
-			SecurityService.pushAdvisor(SECURITY_ADVISOR_ALLOW_ALL);
-		}
-
-		resourceUrl = transferSiteResource(oSiteId, nSiteId, siteAttribute);
-
-		if (bypassSecurity != null && bypassSecurity) {
-			SecurityService.popAdvisor();
-		}
-
-		return resourceUrl;
-	}
-
 	/**
 	 * This is used to update exsiting site attributes with encoded site id in it. A new resource item is added to new site when needed
 	 * 
@@ -8626,71 +8599,79 @@ public class SiteAction extends PagedResourceActionII {
 	 * @return the new migrated resource url
 	 */
 	private String transferSiteResource(String oSiteId, String nSiteId, String siteAttribute) {
+
+		SecurityService.pushAdvisor(SECURITY_ADVISOR_ALLOW_ALL);
 		String rv = "";
-		
-		String access = ServerConfigurationService.getAccessUrl();
-		if (siteAttribute!= null && siteAttribute.indexOf(oSiteId) != -1 && access != null)
-		{
-			Reference ref = null;
-			try
+
+		try {
+
+			String access = ServerConfigurationService.getAccessUrl();
+			if (siteAttribute!= null && siteAttribute.indexOf(oSiteId) != -1 && access != null)
 			{
-				URI accessUrl = new URI(access);
-				URI url = new URI(siteAttribute);
-				String path = url.getPath();
-				String accessPath = accessUrl.getPath();
-				
-				// stripe out the access url, get the relative form of "url"
-				String contentRef = path.replaceAll(accessPath, "");
-				
-				ref = EntityManager.newReference(contentRef);
-				
-				ContentResource resource = m_contentHostingService.getResource(ref.getId());
-				// the new resource
-				ContentResource nResource = null;
-				String oResourceId = resource.getId();
-				String nResourceId = oResourceId.replaceAll(oSiteId, nSiteId);
+				Reference ref = null;
 				try
 				{
-					nResource = m_contentHostingService.getResource(nResourceId);
-					rv = nResource.getUrl();
-				}
-				catch (Exception n2Exception)
-				{
-					// copy the resource then
+					URI accessUrl = new URI(access);
+					URI url = new URI(siteAttribute);
+					String path = url.getPath();
+					String accessPath = accessUrl.getPath();
+
+					// stripe out the access url, get the relative form of "url"
+					String contentRef = path.replaceAll(accessPath, "");
+
+					ref = EntityManager.newReference(contentRef);
+
+					ContentResource resource = m_contentHostingService.getResource(ref.getId());
+					// the new resource
+					ContentResource nResource = null;
+					String oResourceId = resource.getId();
+					String nResourceId = oResourceId.replaceAll(oSiteId, nSiteId);
 					try
 					{
-						ContentCopyContext copyContext = contentCopy.createCopyContext(oSiteId, nSiteId, true);
-						copyContext.addResource(oResourceId);
-						contentCopy.copyReferences(copyContext);
-						String copyResourceId = copyContext.getCopyResults().get(oResourceId);
-						if (copyResourceId != null) {
-							rv = m_contentHostingService.getUrl(copyResourceId);
+						nResource = m_contentHostingService.getResource(nResourceId);
+						rv = nResource.getUrl();
+					}
+					catch (Exception n2Exception)
+					{
+						// copy the resource then
+						try
+						{
+							ContentCopyContext copyContext = contentCopy.createCopyContext(oSiteId, nSiteId, true);
+							copyContext.addResource(oResourceId);
+							contentCopy.copyReferences(copyContext);
+							String copyResourceId = copyContext.getCopyResults().get(oResourceId);
+							if (copyResourceId != null) {
+								rv = m_contentHostingService.getUrl(copyResourceId);
+							}
+						}
+						catch (Exception n3Exception)
+						{
 						}
 					}
-					catch (Exception n3Exception)
-					{
+
+					// fallback to empty if something went wrong
+					if (rv == null) {
+						rv = "";
 					}
+
 				}
-				
-				// fallback to empty if something went wrong
-				if (rv == null) {
-					rv = "";
+				catch (URISyntaxException use)
+				{
+					M_log.warn("Couldn't update site resource: "+ siteAttribute + " "+ use.getMessage());
 				}
-				
+				catch (Exception refException)
+				{
+					M_log.warn(this + ":transferSiteResource: cannot find resource with ref=" + ref.getReference() + " " + refException.getMessage());
+				}
 			}
-			catch (URISyntaxException use)
-			{
-				M_log.warn("Couldn't update site resource: "+ siteAttribute + " "+ use.getMessage());
-			}
-			catch (Exception refException)
-			{
-				M_log.warn(this + ":transferSiteResource: cannot find resource with ref=" + ref.getReference() + " " + refException.getMessage());
-			}
+
+		} finally {
+			SecurityService.getInstance().popAdvisor(SECURITY_ADVISOR_ALLOW_ALL);
 		}
 		
 		return rv;
 	}
-	
+
 	/**
 	 * copy tool content from old site
 	 * @param oSiteId
@@ -8698,88 +8679,88 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	private void importToolContent(String oSiteId, Site site, boolean bypassSecurity) {
 		String nSiteId = site.getId();
-		
+
 		// import tool content
-		if (bypassSecurity)
-		{
+		if (bypassSecurity) {
 			// importing from template, bypass the permission checking:
 			// temporarily allow the user to read and write from assignments (asn.revise permission)
 			SecurityService.pushAdvisor(SECURITY_ADVISOR_ALLOW_ALL);
 		}
+		try {
+			List pageList = site.getPages();
+			Set<String> toolsCopied = new HashSet<String>();
 
-		List pageList = site.getPages();
-		Set<String> toolsCopied = new HashSet<String>();
-		
-		Map transversalMap = new HashMap();
+			Map transversalMap = new HashMap();
 
-		if (!((pageList == null) || (pageList.size() == 0))) {
-			for (ListIterator i = pageList
-					.listIterator(); i.hasNext();) {
-				SitePage page = (SitePage) i.next();
+			if (!((pageList == null) || (pageList.size() == 0))) {
+				for (ListIterator i = pageList
+						.listIterator(); i.hasNext();) {
+					SitePage page = (SitePage) i.next();
 
-				List pageToolList = page.getTools();
-				if (!(pageToolList == null || pageToolList.size() == 0))
-				{
-					
-					Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
-					String toolId = tool != null?tool.getId():"";
-					if (toolId.equalsIgnoreCase("sakai.resources")) {
-						// handle
-						// resource
-						// tool
-						// specially
-						Map<String,String> entityMap = transferCopyEntities(
-								toolId,
-								m_contentHostingService
-										.getSiteCollection(oSiteId),
-								m_contentHostingService
-										.getSiteCollection(nSiteId));
-						if(entityMap != null){							 
-							transversalMap.putAll(entityMap);
+					List pageToolList = page.getTools();
+					if (!(pageToolList == null || pageToolList.size() == 0))
+					{
+
+						Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
+						String toolId = tool != null?tool.getId():"";
+						if (toolId.equalsIgnoreCase("sakai.resources")) {
+							// handle
+							// resource
+							// tool
+							// specially
+							Map<String,String> entityMap = transferCopyEntities(
+									toolId,
+									m_contentHostingService
+											.getSiteCollection(oSiteId),
+									m_contentHostingService
+											.getSiteCollection(nSiteId));
+							if(entityMap != null){
+								transversalMap.putAll(entityMap);
+							}
+						} else if (toolId.equalsIgnoreCase(SITE_INFORMATION_TOOL)) {
+							// handle Home tool specially, need to update the site infomration display url if needed
+							String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
+							site.setInfoUrl(newSiteInfoUrl);
 						}
-					} else if (toolId.equalsIgnoreCase(SITE_INFORMATION_TOOL)) {
-						// handle Home tool specially, need to update the site infomration display url if needed
-						String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
-						site.setInfoUrl(newSiteInfoUrl);
-					}
-					else {
-						// other
-						// tools
-                        // SAK-19686 - added if statement and toolsCopied.add
-                        if (!toolsCopied.contains(toolId)) {
-                        	Map<String,String> entityMap = transferCopyEntities(toolId,
-                                         oSiteId, nSiteId);
-                        	if(entityMap != null){							 
-    							transversalMap.putAll(entityMap);
-    						}
-                            toolsCopied.add(toolId);
-                        }
+						else {
+							// other
+							// tools
+							// SAK-19686 - added if statement and toolsCopied.add
+							if (!toolsCopied.contains(toolId)) {
+								Map<String,String> entityMap = transferCopyEntities(toolId,
+											 oSiteId, nSiteId);
+								if(entityMap != null){
+									transversalMap.putAll(entityMap);
+								}
+								toolsCopied.add(toolId);
+							}
+						}
 					}
 				}
-			}
-			
-			//update entity references
-			toolsCopied = new HashSet<String>();
-			for (ListIterator i = pageList
-					.listIterator(); i.hasNext();) {
-				SitePage page = (SitePage) i.next();
 
-				List pageToolList = page.getTools();
-				if (!(pageToolList == null || pageToolList.size() == 0))
-				{					
-					Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
-					String toolId = tool != null?tool.getId():"";
-					
-					updateEntityReferences(toolId, nSiteId, transversalMap, site);
+				//update entity references
+				toolsCopied = new HashSet<String>();
+				for (ListIterator i = pageList
+						.listIterator(); i.hasNext();) {
+					SitePage page = (SitePage) i.next();
+
+					List pageToolList = page.getTools();
+					if (!(pageToolList == null || pageToolList.size() == 0))
+					{
+						Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
+						String toolId = tool != null?tool.getId():"";
+
+						updateEntityReferences(toolId, nSiteId, transversalMap, site);
+					}
 				}
 			}
-		}
-		
-		if (bypassSecurity)
-		{
-			SecurityService.popAdvisor();
+		} finally {
+			if (bypassSecurity) {
+				SecurityService.getInstance().popAdvisor(SECURITY_ADVISOR_ALLOW_ALL);
+			}
 		}
 	}
+
 	/**
 	 * get user answers to setup questions
 	 * @param params
