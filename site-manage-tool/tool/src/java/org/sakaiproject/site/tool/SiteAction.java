@@ -13292,7 +13292,9 @@ public class SiteAction extends PagedResourceActionII {
 				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			}
 			siteInfo.site_type = templateSite.getType();
-			siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
+
+			// WL-2186 - the site title was already set when we were in the heirarchy tool
+			siteInfo.title = (String) state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
 			siteInfo.term = StringUtils.trimToNull(params.getString("selectTermTemplate"));
 			siteInfo.iconUrl = templateSite.getIconUrl(); // If it's inside the site we'll change it when we make the copy
 			siteInfo.description = templateSite.getDescription();
