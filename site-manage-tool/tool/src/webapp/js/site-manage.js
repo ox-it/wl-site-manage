@@ -148,7 +148,6 @@ sakai.siteTypeSetup = function(){
     $('#buildOwn').click(function(e){
         $('#templateSettings').hide();
         $('#templateSettings input:checked').attr('checked', '');
-        $('#siteTitleField').attr('value', '');
         $('input[id="copy"]').attr('checked', '');
         $('#templateSettings select').attr('selectedIndex', 0);
         $('#templateSettings span').hide();
@@ -160,24 +159,7 @@ sakai.siteTypeSetup = function(){
         $('#nextInstructions span').hide();
         utils.resizeFrame('grow');
     });
-    $('#siteTitleField').keyup(function(e){
-        if ($(this).attr('value').length >= 1) {
-            $('#submitFromTemplate').attr('disabled', '');
-        }
-        else {
-            $('#submitFromTemplate').attr('disabled', 'disabled');
-        }
-    });
-    $('#siteTitleField').blur(function(){
-        if ($(this).attr('value').length >= 1) {
-            $('#submitFromTemplate').attr('disabled', '');
-        }
-        else {
-            $('#submitFromTemplate').attr('disabled', 'disabled');
-        }
-    });
-    
-    
+
     $('#selectTermTemplate').change(function(){
         if (this.selectedIndex === 0) {
             $('#submitFromTemplateCourse').attr('disabled', 'disabled');
@@ -195,7 +177,6 @@ sakai.siteTypeSetup = function(){
             $('#templateSettings span').hide();
             $('#templateSettings select').attr('selectedIndex', 0);
             $('#submitFromTemplateCourse').attr('disabled', 'disabled');
-                $('#siteTitleField').attr('value', '');
         }
         else {
         
@@ -205,19 +186,17 @@ sakai.siteTypeSetup = function(){
             if (type == "course") {
               $('#templateCourseInstruction').show();
               $('#submitFromTemplate').hide();
-			  $('#submitFromTemplateCourse').show();
-    		  $('#siteTerms').show();
-              $('#siteTitle').hide();	
+              $('#submitFromTemplateCourse').show();
+              $('#submitFromTemplateCourse').attr('disabled', false);
+              $('#siteTerms').show();
               $('#siteTerms select').focus();
-              $('#siteTitleField').attr('value', '');
             }
             else {
-                $('#submitFromTemplate').show();
                 $('#submitFromTemplateCourse').hide();
-                $('#templateNonCourseInstruction').show();				
-                $('#siteTitle').show();	
+                $('#submitFromTemplate').show();
+                $('#submitFromTemplate').attr('disabled', false);
+                $('#templateNonCourseInstruction').show();
                 $('#siteTerms select').attr('selectedIndex', 0);
-                $('#siteTitle input').focus();
             }
         }
     });
