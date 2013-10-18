@@ -195,7 +195,7 @@ sakai.siteTypeSetup = function(){
             $('#templateSettings span').hide();
             $('#templateSettings select').attr('selectedIndex', 0);
             $('#submitFromTemplateCourse').attr('disabled', 'disabled');
-                $('#siteTitleField').attr('value', '');
+            $('#siteTitleField').attr('value', '');
         }
         else {
         
@@ -205,14 +205,22 @@ sakai.siteTypeSetup = function(){
             if (type == "course") {
               $('#templateCourseInstruction').show();
               $('#submitFromTemplate').hide();
-			  $('#submitFromTemplateCourse').show();
-    		  $('#siteTerms').show();
+              $('#submitFromTemplateCourse').show();
+              // WL-2186 sometimes the title is defined in the state and so we cna move straight on.
+              if ($('#siteTitleField').length == 0) {
+                $('#submitFromTemplateCourse').attr('disabled', false);
+              }
+              $('#siteTerms').show();
               $('#siteTitle').hide();	
               $('#siteTerms select').focus();
               $('#siteTitleField').attr('value', '');
             }
             else {
                 $('#submitFromTemplate').show();
+                // WL-2186 sometimes the title is defined in the state and so we cna move straight on.
+                if ($('#siteTitleField').length == 0) {
+                    $('submitFromTemplate').attr('disabled', false);
+                }
                 $('#submitFromTemplateCourse').hide();
                 $('#templateNonCourseInstruction').show();				
                 $('#siteTitle').show();	
