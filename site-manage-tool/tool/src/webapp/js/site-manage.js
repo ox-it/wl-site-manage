@@ -219,7 +219,7 @@ sakai.siteTypeSetup = function(){
                 $('#submitFromTemplate').show();
                 // WL-2186 sometimes the title is defined in the state and so we cna move straight on.
                 if ($('#siteTitleField').length == 0) {
-                    $('submitFromTemplate').attr('disabled', false);
+                    $('#submitFromTemplate').attr('disabled', false);
                 }
                 $('#submitFromTemplateCourse').hide();
                 $('#templateNonCourseInstruction').show();				

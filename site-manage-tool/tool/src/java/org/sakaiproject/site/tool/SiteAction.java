@@ -13296,7 +13296,15 @@ public class SiteAction extends PagedResourceActionII {
 				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			}
 			siteInfo.site_type = templateSite.getType();
-			siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
+
+			// WL-2186 if there was already a site title defined (saved in the state) then the text field won't be shown again.
+			String stateTitle = (String) state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			if (stateTitle != null && !stateTitle.isEmpty()) {
+				siteInfo.title = stateTitle;
+			} else {
+				siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
+			}
+
 			siteInfo.term = StringUtils.trimToNull(params.getString("selectTermTemplate"));
 			siteInfo.iconUrl = templateSite.getIconUrl(); // If it's inside the site we'll change it when we make the copy
 			siteInfo.description = templateSite.getDescription();

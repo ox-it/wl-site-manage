@@ -135,7 +135,7 @@
 					title length restrictions are copied from template chef_site-siteInfo-editInfo.vm maxlength needs to be set like in that template
 					*#
 					#* WL-2186, in some cases the the title has already been defined so we don't need to ask for it twice *#
-					#if ($titleAlreadyDefined)
+					#if (!$titleAlreadyDefined)
 						<span id="siteTitle"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteTitleField">$tlang.getString("sitetype.sitetitle") </label><input type="text" value="" size="20" maxlength="$!titleMaxLength"  id="siteTitleField" name="siteTitleField"/></span>
 					#end
 					<span id="siteTerms" style="display:none"><strong class="reqStarInline"> * </strong>
