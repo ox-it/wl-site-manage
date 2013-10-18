@@ -1542,7 +1542,11 @@ public class SiteAction extends PagedResourceActionII {
 			if ((Boolean)state.getAttribute(STATE_ADMIN_REALM_FROM_USER)) {
 				context.put("back", "63");
 			}
-			
+
+			// WL-2186 in some cases the hierarchy helper will have already defined the title, so let's not show it here.
+			String title = (String) state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			context.put("titleAlreadyDefined", title != null && !title.isEmpty());
+
 			return (String) getContext(data).get("template") + TEMPLATE[1];
 		case 2:
 			// This needs fixing as case 2 isn't supported in the current version of SiteAction.
