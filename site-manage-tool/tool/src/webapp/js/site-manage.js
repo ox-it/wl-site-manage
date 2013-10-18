@@ -160,22 +160,17 @@ sakai.siteTypeSetup = function(){
         $('#nextInstructions span').hide();
         utils.resizeFrame('grow');
     });
-    $('#siteTitleField').keyup(function(e){
+
+    var changeSiteTitleField = function(e){
         if ($(this).attr('value').length >= 1) {
             $('#submitFromTemplate').attr('disabled', '');
         }
         else {
             $('#submitFromTemplate').attr('disabled', 'disabled');
         }
-    });
-    $('#siteTitleField').blur(function(){
-        if ($(this).attr('value').length >= 1) {
-            $('#submitFromTemplate').attr('disabled', '');
-        }
-        else {
-            $('#submitFromTemplate').attr('disabled', 'disabled');
-        }
-    });
+    };
+    $('#siteTitleField').keyup(changeSiteTitleField);
+    $('#siteTitleField').blur(changeSiteTitleField);
     
     
     $('#selectTermTemplate').change(function(){
