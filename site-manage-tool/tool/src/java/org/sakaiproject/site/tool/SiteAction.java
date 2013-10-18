@@ -1542,7 +1542,11 @@ public class SiteAction extends PagedResourceActionII {
 			if ((Boolean)state.getAttribute(STATE_ADMIN_REALM_FROM_USER)) {
 				context.put("back", "63");
 			}
-			
+
+			// WL-2186 in some cases the hierarchy helper will have already defined the title, so let's not show it here.
+			String title = (String) state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			context.put("titleAlreadyDefined", title != null && !title.isEmpty());
+
 			return (String) getContext(data).get("template") + TEMPLATE[1];
 		case 2:
 			// This needs fixing as case 2 isn't supported in the current version of SiteAction.
@@ -13292,7 +13296,15 @@ public class SiteAction extends PagedResourceActionII {
 				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			}
 			siteInfo.site_type = templateSite.getType();
-			siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
+
+			// WL-2186 if there was already a site title defined (saved in the state) then the text field won't be shown again.
+			String stateTitle = (String) state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			if (stateTitle != null && !stateTitle.isEmpty()) {
+				siteInfo.title = stateTitle;
+			} else {
+				siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
+			}
+
 			siteInfo.term = StringUtils.trimToNull(params.getString("selectTermTemplate"));
 			siteInfo.iconUrl = templateSite.getIconUrl(); // If it's inside the site we'll change it when we make the copy
 			siteInfo.description = templateSite.getDescription();
