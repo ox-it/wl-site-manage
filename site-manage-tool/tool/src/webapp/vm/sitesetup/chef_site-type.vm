@@ -27,14 +27,16 @@
 		$tlang.getString("sitetype.crenewsit") 
 	</h3>
 	#if ($alertMessage)<div class="alertMessage">$tlang.getString("sitetype.alert") $validator.escapeHtml($alertMessage)</div>	#end
-	<p class="step">
-		## if there is NO template site types
-		$tlang.getString("sitetype.chothetyp.withouttemplate")<br /><br />
+	<div class="step">
 		#if ($templateSites.size() > 0)
 			## if there is template site types
-			$tlang.getString("sitetype.chothetyp.withtemplate")
+			<p>$tlang.getString("sitetype.chothetyp.withtemplate")</p>
+			<p>$tlang.getString("sitetype.chothetyp.withouttemplate")</p>
+		#else
+			## if there is NO template site types
+			<p>$tlang.getString("sitetype.chothetyp.withouttemplate")</p>
 		#end
-	</p>
+	</div>
 	<form name="typeform" id="typeform" action="#toolForm("$action")" method="post">
 		#if ($templateSites.size() > 0)
 			## only show the radio button when there is any template site defined
