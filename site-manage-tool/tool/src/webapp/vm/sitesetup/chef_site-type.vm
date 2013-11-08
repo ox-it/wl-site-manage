@@ -30,8 +30,12 @@
 	<div class="step">
 		#if ($templateSites.size() > 0)
 			## if there is template site types
-			<p>$tlang.getString("sitetype.chothetyp.withtemplate")</p>
-			<p>$tlang.getString("sitetype.chothetyp.withouttemplate")</p>
+			<p>$tlang.getString("sitetype.chothetyp.ittakestwo")</p>
+			<ul>
+				<li>$tlang.getString("sitetype.chothetyp.withtemplate")</li>
+				<li>$tlang.getString("sitetype.chothetyp.withouttemplate")</li>
+			</ul>
+			<p>$tlang.getString("sitetype.chothetyp.bothworkwithtools")</p>
 		#else
 			## if there is NO template site types
 			<p>$tlang.getString("sitetype.chothetyp.withouttemplate")</p>
