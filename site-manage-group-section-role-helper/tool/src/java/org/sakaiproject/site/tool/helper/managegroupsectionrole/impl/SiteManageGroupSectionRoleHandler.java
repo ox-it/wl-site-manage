@@ -279,15 +279,11 @@ public class SiteManageGroupSectionRoleHandler {
             	if (group != null)
             	{
             		String roleProviderId = group.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
-            		if (roleProviderId != null)
-            		{
-	            			Collection<String> groupProvidedRoles = SiteGroupHelper.unpack(roleProviderId);
-	            			for(String role: groupProvidedRoles)
-	            			{
-	            				roles.remove(group.getRole(role));
-	            			}
-
-            		}
+	            	Collection<String> groupProvidedRoles = SiteGroupHelper.unpack(roleProviderId);
+	            	for(String role: groupProvidedRoles)
+	            	{
+	            		roles.remove(group.getRole(role));
+	            	}
             	}
             }
         }
@@ -881,13 +877,35 @@ public class SiteManageGroupSectionRoleHandler {
 		}
 		return title.trim();
 	}
-    
+
+	/**
+	 * Return a single string representing the provider id list
+	 * @param idsList
+	 */
+	private String getProviderString(List<String> idsList)
+	{
+		return SiteGroupHelper.pack(idsList);
+	}
+
     /**
-     * Return a single string representing the provider id list
-     * @param idsList
-     */
-    private String getProviderString(List<String> idsList)
-    {
+    	String[] sArray = new String[idsList.size()];
+		sArray = (String[]) idsList.toArray(sArray);
+		if (groupProvider != null)
+		{
+			return groupProvider.packId(sArray);
+		}
+		else
+		{
+			// simply concat strings
+			StringBuffer rv = new StringBuffer();
+			for(String sArrayString:sArray)
+			{
+				rv.append(" ").append(sArrayString);
+			}
+			return rv.toString();
+		}
+    }
+    /**
 		return SiteGroupHelper.pack(idsList);
 	}
     }

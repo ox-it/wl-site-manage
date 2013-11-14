@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 import static org.sakaiproject.site.util.SiteGroupHelper.*;
@@ -14,37 +15,37 @@ import static org.sakaiproject.site.util.SiteGroupHelper.*;
 public class SiteGroupHelperTest {
 
 	@Test
-	public void testPackSimple() {
+	public void testRoundTripSimple() {
 		testRoundTrip("A", "B");
 	}
 
 	@Test
-	public void testPackEmpty() {
+	public void testRoundTripEmpty() {
 		testRoundTrip("", "", "A", "");
 	}
 
 	@Test
-	public void testPackNothing() {
+	public void testRoundTripNothing() {
 		testRoundTrip("");
 	}
 
 	@Test
-	public void testPackSeperator() {
+	public void testRoundTripSeperator() {
 		testRoundTrip(SEPARATOR_STR, "A", SEPARATOR_STR);
 	}
 
 	@Test
-	public void testPackEscape() {
+	public void testRoundTripEscape() {
 		testRoundTrip(ESCAPE_STR, "A", ESCAPE_STR);
 	}
 
 	@Test
-	public void testPackEmbedded() {
+	public void testRoundTripEmbedded() {
 		testRoundTrip("Hello", SEPARATOR_STR +"middle"+ SEPARATOR_STR, ESCAPE_STR+"middle"+ESCAPE_STR);
 	}
 
 	@Test
-	public void testPackMess() {
+	public void testRoundTripMess() {
 		testRoundTrip(SEPARATOR_STR+ESCAPE_STR+ESCAPE_STR+SEPARATOR_STR);
 	}
 
@@ -52,6 +53,16 @@ public class SiteGroupHelperTest {
 		Collection<String> source = Arrays.asList(parts);
 		String packed = pack(source);
 		Collection<String> unpacked = unpack(packed);
-		assertEquals("Packed value was : "+ packed +"\n", source, unpacked);
+		assertEquals("RoundTriped value was : "+ packed +"\n", source, unpacked);
+	}
+
+	@Test
+	public void testPackNull() {
+		assertNull(pack(null));
+	}
+
+	@Test
+	public void testUnpackNull() {
+		assertEquals(Collections.emptyList(), unpack(null));
 	}
 }

@@ -44,7 +44,7 @@ public class SiteConstants {
 	 * be members of this group.
 	 */
 	public static final String GROUP_PROP_ROLE_PROVIDERID = "group_prop_role_providerid";
-	
+
 	public static final int SITE_GROUP_TITLE_LIMIT = 99;
 
 }
