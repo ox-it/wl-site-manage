@@ -64,7 +64,7 @@ public class SiteGroupHelper {
 	 * This packs IDs into a string. It supports empty IDs but not <code>null</code>.
 	 *
 	 * @param ids A Collection of IDs to be packed together.
-	 * @return The packed string containing all the IDs or <code>null</code> if the original colleciton was
+	 * @return The packed string containing all the IDs or <code>null</code> if the original collection was
 	 * <code>null</code>.
 	 * @see #unpack(String)
 	 */
