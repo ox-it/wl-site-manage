@@ -38,7 +38,11 @@ public class SiteConstants {
 	public static final String SORTED_BY_DISPLAY_ID = "display_id";
 	
 	public static final String GROUP_PROP_WSETUP_CREATED = "group_prop_wsetup_created";
-	
+
+	/**
+	 * This property is used on groups to mark which roles in the site should automatically
+	 * be members of this group.
+	 */
 	public static final String GROUP_PROP_ROLE_PROVIDERID = "group_prop_role_providerid";
 	
 	public static final int SITE_GROUP_TITLE_LIMIT = 99;
