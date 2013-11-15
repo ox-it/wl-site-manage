@@ -40,6 +40,7 @@ import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.util.Participant;
 import org.sakaiproject.site.util.SiteConstants;
+import org.sakaiproject.site.util.SiteGroupHelper;
 import org.sakaiproject.site.util.SiteParticipantHelper;
 import org.sakaiproject.sitemanage.api.SiteHelper;
 import org.sakaiproject.tool.api.SessionManager;
@@ -341,17 +342,11 @@ public class SiteManageGroupSectionRoleHandler {
             	if (group != null)
             	{
             		String roleProviderId = group.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
-            		if (roleProviderId != null)
-            		{
-            			if (groupProvider != null)
-            			{
-	            			String[] groupProvidedRoles = groupProvider.unpackId(roleProviderId);
-	            			for(int i=0; i<groupProvidedRoles.length;i++)
-	            			{
-	            				roles.remove(group.getRole(groupProvidedRoles[i]));
-	            			}
-            			}
-            		}
+	            	Collection<String> groupProvidedRoles = SiteGroupHelper.unpack(roleProviderId);
+	            	for(String role: groupProvidedRoles)
+	            	{
+	            		roles.remove(group.getRole(role));
+	            	}
             	}
             }
         }
@@ -1165,13 +1160,17 @@ public class SiteManageGroupSectionRoleHandler {
 		}
 		return title.trim();
 	}
-    
+
+	/**
+	 * Return a single string representing the provider id list
+	 * @param idsList
+	 */
+	private String getProviderString(List<String> idsList)
+	{
+		return SiteGroupHelper.pack(idsList);
+	}
+
     /**
-     * Return a single string representing the provider id list
-     * @param idsList
-     */
-    private String getProviderString(List<String> idsList)
-    {
     	String[] sArray = new String[idsList.size()];
 		sArray = (String[]) idsList.toArray(sArray);
 		if (groupProvider != null)
@@ -1188,6 +1187,10 @@ public class SiteManageGroupSectionRoleHandler {
 			}
 			return rv.toString();
 		}
+    }
+    /**
+		return SiteGroupHelper.pack(idsList);
+	}
     }
     /**
      * Removes a group from the site
@@ -1277,9 +1280,9 @@ public class SiteManageGroupSectionRoleHandler {
     }
     
     /**
-     * check whether there is already a group within the site containing the role id
-     * @param roleId
-     * @return
+     * Check whether there is already a group within the site containing the role id
+     * @param roleId This role to check the site groups against. eg: access.
+     * @return <code>true</code> if this a group for this role already exists.
      */
     public boolean existRoleGroup(String roleId)
     {
