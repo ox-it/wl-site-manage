@@ -1746,7 +1746,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("removals", remove);
 			
 			//check if soft deletes are activated
-			if(ServerConfigurationService.getBoolean("site.soft.deletion", false) && !SecurityService.isSuperUser()) {
+			if(ServerConfigurationService.getBoolean("site.soft.deletion", false)) {
 				context.put("softDelete", true);
 			}
 			
