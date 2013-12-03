@@ -33,7 +33,7 @@
 			<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')" />
 		</div>
 	#else
-		<p>$tlang.getString("siteseladm.none")</p>
+		$tlang.getString("siteseladm.none.html")
 		<input type="hidden" name="back" value="0" />
 		<input type="hidden" name="templateIndex" value="$template" />
 		<div class ="act">
