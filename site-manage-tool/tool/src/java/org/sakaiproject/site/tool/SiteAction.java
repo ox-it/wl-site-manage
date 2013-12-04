@@ -5672,8 +5672,6 @@ public class SiteAction extends PagedResourceActionII {
 						M_log.warn(this + "doFinish: remove provider id " + " new site =" + site.getReference() + " " + removeProviderException.getMessage());
 					}
 				}
-				// We don't want the new site to automatically be a template
-				site.getPropertiesEdit().removeProperty("template");
 				
 				// publish the site or not based on the template choice
 				site.setPublished(state.getAttribute(STATE_TEMPLATE_PUBLISH) != null?true:false);
@@ -10318,6 +10316,10 @@ public class SiteAction extends PagedResourceActionII {
 				Site templateSite = (Site) state.getAttribute(STATE_TEMPLATE_SITE);
 				if (templateSite != null) {
 					site = SiteService.addSite(id, templateSite, adminSite);
+					// We don't want the new site to automatically be a template and we want to do this as soon
+					// as possible after creation so if a problem occurs the resulting site isn't still a
+					// template.
+					site.getProperties().removeProperty("template");
 				} else {
 					site = SiteService.addSite(id, siteInfo.site_type, adminSite);
 				}
