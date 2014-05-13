@@ -24,6 +24,7 @@
                <input type="submit" accesskey="s" class= "active" name="eventSubmit_doUpdate_site_admin" value="$tlang.getString("gen.update")" #if(!$hasAvailableSites) disabled="disabled"#end/>
                <input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString("sitediinf.can")" />
        </div>
+       <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
 </form>
        </div>
 
