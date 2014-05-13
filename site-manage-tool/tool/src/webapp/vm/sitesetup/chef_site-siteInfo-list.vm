@@ -402,7 +402,8 @@ function printPreview(target){
 		<div>
 		<form method="post" action="#toolForm("SiteAction")">
 			<input type="submit" name="eventSubmit_doExternalGroupsHelper" value="$tlang.getString("sitegen.siteinfolist.addextgroup")"/>
-		</form>
+            <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+        </form>
 		</div>
 		#end
 	#end
