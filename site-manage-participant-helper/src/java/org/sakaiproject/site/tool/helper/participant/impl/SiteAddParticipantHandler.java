@@ -1274,34 +1274,13 @@ public class SiteAddParticipantHandler {
 	public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
 	    this.passwordGenerator = passwordGenerator;
 	}
-	
-	/**
-	 * get the settings whether non official account users are allowed or not
-	 * site-wide settings can override the system-wide settings
-	 * @return
-	 */
-	public String getAllowNonOfficialAccount()
-	{
-		// get system setting first
-    	String rv = getServerConfigurationString("nonOfficialAccount", "true");
-    	
-    	// get site property, if different, it overrides sakai.properties setting
-    	if (site == null) {
-    	        M_log.error("Could not get site and thus, site properties.");
-    	}
-    	else
-    	{
-    	    String allowThisSiteAddNonOfficialParticipant = site.getProperties().getProperty("nonOfficialAccount");
-    	    M_log.debug("Site non-official allowed? "+allowThisSiteAddNonOfficialParticipant);
-    	    if (allowThisSiteAddNonOfficialParticipant != null && !allowThisSiteAddNonOfficialParticipant.equalsIgnoreCase(rv)) {
-    	        rv = allowThisSiteAddNonOfficialParticipant;
-    	    }
-    	}
-    	
-    	return rv;
-	}
 
-	public enum ConfigOption{ EXTERNAL_PARTICIPANTS };
+	public enum ConfigOption{
+		/**
+		 * Should external participants be allowed to be added in this site.
+		 */
+		EXTERNAL_PARTICIPANTS
+	};
 	
 	public boolean isEnabled(ConfigOption option) {
 		// This is a hack because sometimes this bean is wrongly re-used between requests.
@@ -1310,11 +1289,16 @@ public class SiteAddParticipantHandler {
 			init();
 		}
 		if(ConfigOption.EXTERNAL_PARTICIPANTS.equals(option)) {
-			// Check enabled serverwide first
+			// Check enabled server wide first
 			boolean externalUsers = serverConfigurationService.getBoolean("nonOfficialAccount", true);
 			if (externalUsers) {
 				// Some site types don't allow external users.
 				externalUsers = !serverConfigurationService.getString("twofactor.site.type", "secure").equals(site.getType());
+			} else {
+				String nonOfficialAccountSite = site.getProperties().getProperty("nonOfficialAccount");
+				if (nonOfficialAccountSite != null) {
+					externalUsers = Boolean.valueOf(nonOfficialAccountSite);
+				}
 			}
 			return externalUsers;
 		}
