@@ -171,6 +171,9 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 			 replacementValues.put("userEid", user.getEid());
 			 replacementValues.put("localSakaiName",serverConfigurationService.getString(
 	    				"ui.service", ""));
+			 replacementValues.put("siteUrl",site.getUrl());
+			 replacementValues.put("loginText",serverConfigurationService.getString("login.text", "Login"));
+			 replacementValues.put("xloginText",serverConfigurationService.getString("xlogin.text", "Login"));
 			 replacementValues.put("currentUserName",userDirectoryService.getCurrentUser().getDisplayName());
 			 replacementValues.put("localSakaiUrl", serverConfigurationService.getPortalUrl());
 			 String nonOfficialAccountUrl = serverConfigurationService.getString("nonOfficialAccount.url", null);
