@@ -1277,7 +1277,7 @@ public class SiteAddParticipantHandler {
 
 	public enum ConfigOption{
 		/**
-		 * Should external participants be allows to be added in this site.
+		 * Should external participants be allowed to be added in this site.
 		 */
 		EXTERNAL_PARTICIPANTS
 	};
