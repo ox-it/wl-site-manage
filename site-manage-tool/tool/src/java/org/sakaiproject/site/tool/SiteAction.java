@@ -15017,8 +15017,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 
 			siteInfo.term = StringUtils.trimToNull(params.getString("selectTermTemplate"));
 			siteInfo.iconUrl = templateSite.getIconUrl(); // If it's inside the site we'll change it when we make the copy
-			// description is site-specific. Shouldn't come from template
-			// siteInfo.description = templateSite.getDescription();
+			siteInfo.description = templateSite.getDescription();
 			siteInfo.short_description = templateSite.getShortDescription();
 			siteInfo.joinable = templateSite.isJoinable();
 			siteInfo.joinerRole = templateSite.getJoinerRole();
