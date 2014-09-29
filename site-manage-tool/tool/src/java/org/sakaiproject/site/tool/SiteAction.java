@@ -6716,7 +6716,6 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 					    M_log.error(this + "doFinish: unable to reload site " + site.getId() + " after updating roster.");
 					}
 				}
-
 				// publish the site or not based on the template choice
 				site.setPublished(state.getAttribute(STATE_TEMPLATE_PUBLISH) != null?true:false);
 
