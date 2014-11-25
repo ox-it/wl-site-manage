@@ -1425,7 +1425,7 @@ public class SiteAction extends PagedResourceActionII {
 		String alert=(String)state.getAttribute(STATE_MESSAGE);
 		context.put("alertMessage", state.getAttribute(STATE_MESSAGE));
 		context.put("siteTextEdit", new SiteTextEditUtil());
-		
+		context.put("isExpandTemplates", ServerConfigurationService.getBoolean("sitemanage.add.expand.template", false));
 		// the last visited template index
 		if (preIndex != null)
 			context.put("backIndex", preIndex);
