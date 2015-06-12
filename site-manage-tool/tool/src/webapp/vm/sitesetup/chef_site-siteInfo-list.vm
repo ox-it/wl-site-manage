@@ -3,89 +3,88 @@
 ## This macro has been defined in order to reuse the paging panel once at the top of the participant group table and once at the bottom of the participant group table. JIRA Ref -WL3736
 #macro(pagingPanel $pagesizeFormName)
 <div class="navPanel">
-    <div class="viewNav">
-        <h4>
-            $validator.escapeHtml($!siteTitle) $tlang.getString("sitegen.siteinfolist.part") ($tlang.getFormattedMessage("sinfo.list.participantListSize", $!participantListSize))
-
-        </h4>
-    </div>
-    <div class="listNav">
-        <div class="instruction">$tlang.getString("sitegen.siteinfolist.view") $topMsgPos - $btmMsgPos $tlang.getString("sitegen.siteinfolist.of") $allMsgNumber $tlang.getString("sitegen.siteinfolist.items")</div>
-        #if ($pagesize != 0)
-            #if ($goFPButton == "true")
-                <form name="firstpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString("gen.first")</legend>
-                        <input type="submit" name="eventSubmit_doList_first" value="|&lt;" title="$tlang.getString("gen.first")" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #else
-                <form name="firstpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString("gen.first")</legend>
-                        <input type="submit" name="eventSubmit_doList_first" value="|&lt;" disabled="disabled" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #end
-            #if ($goPPButton == "true")
-                <form name="prevpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString('gen.previous') $pagesize</legend>
-                        <input type="submit" name="eventSubmit_doList_prev" value="&lt;" title="$tlang.getString('gen.previous') $pagesize" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #else
-                <form name="prevpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString('gen.previous') $pagesize</legend>
-                        <input type="submit" name="eventSubmit_doList_prev" value="&lt;" disabled="disabled" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #end
-        #end
-        <form id="$pagesizeFormName" name="$pagesizeFormName" class="inlineForm" method="post" action="#toolForm("$action")">
-            <input type="hidden" name="eventSubmit_doChange_pagesize" value="changepagesize" />
-            <label for="selectPageSize" class="skip">$tlang.getString("sitegen.siteinfolist.view.pagesize")</label>
-            <select id="selectPageSize" name="selectPageSize" onchange="document.getElementById('$pagesizeFormName').submit()">
-                #foreach ($i in $!pagesizes)
-                    <option value="$i" #if($pagesize == $i) selected="selected" #end>$tlang.getString("sitegen.siteinfolist.show") $i $tlang.getString("sitegen.siteinfolist.itemspage")</option>
-                #end
-            </select>
-            <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-        </form>
-        #if ($pagesize != 0)
-            #if ($goNPButton == "true")
-                <form name="nextpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString('gen.next') $pagesize</legend>
-                        <input type="submit" name="eventSubmit_doList_next" value="&gt;" title="$tlang.getString('gen.next') $pagesize" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #else
-                <form name="nextpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString('gen.next') $pagesize</legend>
-                        <input type="submit" name="eventSubmit_doList_next" value="&gt;" disabled="disabled" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #end
-            #if ($goLPButton == "true")
-                <form name="lastpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString('gen.last')</legend>
-                        <input type="submit" name="eventSubmit_doList_last" value="&gt;|" title="$tlang.getString('gen.last')" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #else
-                <form name="lastpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-                    <fieldset><legend>$tlang.getString('gen.last')</legend>
-                        <input type="submit" name="eventSubmit_doList_last" value="&gt;|" disabled="disabled" />
-                    </fieldset>
-                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-                </form>
-            #end
-        #end
-    </div>
+	<div class="viewNav">
+		<h4>
+			$validator.escapeHtml($!siteTitle) $tlang.getString("sitegen.siteinfolist.part") ($tlang.getFormattedMessage("sinfo.list.participantListSize", $!participantListSize))
+		</h4>
+	</div>
+	<div class="listNav">
+		<div class="instruction">$tlang.getString("sitegen.siteinfolist.view") $topMsgPos - $btmMsgPos $tlang.getString("sitegen.siteinfolist.of") $allMsgNumber $tlang.getString("sitegen.siteinfolist.items")</div>
+			#if ($pagesize != 0)
+				#if ($goFPButton == "true")
+					<form name="firstpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+						<fieldset><legend>$tlang.getString("gen.first")</legend>
+							<input type="submit" name="eventSubmit_doList_first" value="|&lt;" title="$tlang.getString("gen.first")" />
+						</fieldset>
+						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+					</form>
+				#else
+					<form name="firstpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+						<fieldset><legend>$tlang.getString("gen.first")</legend>
+							<input type="submit" name="eventSubmit_doList_first" value="|&lt;" disabled="disabled" />
+						</fieldset>
+						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+					</form>
+				#end
+				#if ($goPPButton == "true")
+					<form name="prevpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+						<fieldset><legend>$tlang.getString('gen.previous') $pagesize</legend>
+							<input type="submit" name="eventSubmit_doList_prev" value="&lt;" title="$tlang.getString('gen.previous') $pagesize" />
+						</fieldset>
+						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+					</form>
+				#else
+					<form name="prevpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+						<fieldset><legend>$tlang.getString('gen.previous') $pagesize</legend>
+							<input type="submit" name="eventSubmit_doList_prev" value="&lt;" disabled="disabled" />
+						</fieldset>
+						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+					</form>
+				#end
+			#end
+			<form id="$pagesizeFormName" name="$pagesizeFormName" class="inlineForm" method="post" action="#toolForm("$action")">
+				<input type="hidden" name="eventSubmit_doChange_pagesize" value="changepagesize" />
+				<label for="selectPageSize" class="skip">$tlang.getString("sitegen.siteinfolist.view.pagesize")</label>
+				<select id="size_$pagesizeFormName" name="selectPageSize" onchange="document.getElementById('$pagesizeFormName').submit()">
+					#foreach ($i in $!pagesizes)
+						<option value="$i" #if($pagesize == $i) selected="selected" #end>$tlang.getString("sitegen.siteinfolist.show") $i $tlang.getString("sitegen.siteinfolist.itemspage")</option>
+					#end
+				</select>
+				<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+			</form>
+		#if ($pagesize != 0)
+			#if($goNPButton == "true")
+				<form name="nextpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+					<fieldset><legend>$tlang.getString('gen.next') $pagesize</legend>
+						<input type="submit" name="eventSubmit_doList_next" value="&gt;" title="$tlang.getString('gen.next') $pagesize" />
+					</fieldset>
+						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+				</form>
+			#else
+				<form name="nextpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+					<fieldset><legend>$tlang.getString('gen.next') $pagesize</legend>
+						<input type="submit" name="eventSubmit_doList_next" value="&gt;" disabled="disabled" />
+					</fieldset>
+					<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+				</form>
+			#end
+			#if ($goLPButton == "true")
+				<form name="lastpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+					<fieldset><legend>$tlang.getString('gen.last')</legend>
+						<input type="submit" name="eventSubmit_doList_last" value="&gt;|" title="$tlang.getString('gen.last')" />
+					</fieldset>
+					<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+				</form>
+			#else
+				<form name="lastpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
+					<fieldset><legend>$tlang.getString('gen.last')</legend>
+						<input type="submit" name="eventSubmit_doList_last" value="&gt;|" disabled="disabled" />
+					</fieldset>
+					 <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+				</form>
+			#end
+		#end
+	</div>
 </div>
 #end
 
@@ -107,12 +106,12 @@
 			}
 		});
 	  });
-	  
+
 	function toggleSelectAll(caller, elementName)
     {
 		var newValue = caller.checked;
 		var elements = document.getElementsByName(elementName);
-			
+
 		if(elements)
 		{
 			for(var i = 0; i < elements.length; i++)
@@ -165,41 +164,41 @@ function printPreview(target){
 			<div class="navPanel">
 				<div class="itemNav">
 					#if ($!prevSite)
-						<input type="button" 
-							name="previous" 
-							value="&lt; $tlang.getString("sitegen.siteinfolist.previous1")" 
+						<input type="button"
+							name="previous"
+							value="&lt; $tlang.getString("sitegen.siteinfolist.previous1")"
 							onclick="document.siteForm.option.value='$prevSite.Id';javascript:document.siteForm.submit();" accesskey="p" />
 					#else
-						<input type="submit" 
-								name="previous" 
-								value="&lt; $tlang.getString("sitegen.siteinfolist.previous1")" 
+						<input type="submit"
+								name="previous"
+								value="&lt; $tlang.getString("sitegen.siteinfolist.previous1")"
 								disabled="disabled" />
 					#end
-					<input type="button" 
-							name="back" 
-							value="$tlang.getString("sitegen.siteinfolist.return")" 
+					<input type="button"
+							name="back"
+							value="$tlang.getString("sitegen.siteinfolist.return")"
 							onclick="document.siteForm.option.value='';javascript:document.siteForm.submit();" accesskey="l" />
 					#if ($!nextSite)
-						<input type="button" 
-							name="next" 
-							value="$tlang.getString("sitegen.siteinfolist.next1") &gt;" 
+						<input type="button"
+							name="next"
+							value="$tlang.getString("sitegen.siteinfolist.next1") &gt;"
 							onclick="document.siteForm.option.value='$nextSite.Id';javascript:document.siteForm.submit();" accesskey="n" />
 					#else
-						<input type="button" 
-							name="next" 
+						<input type="button"
+							name="next"
 							value="$tlang.getString("sitegen.siteinfolist.next1") &gt;" disabled="disabled" />
 					#end
-				</div>		
-			</div>		
+				</div>
+			</div>
 			<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
 		</form>
 	#end
 	<h3>
-		$validator.escapeHtml($!siteTitle) 
+		$validator.escapeHtml($!siteTitle)
 	</h3>
 	<table cellpadding="0" border="0" cellspacing="0" class="itemSummary" summary="$tlang.getString("sitegen.siteinfolist.summary")">
 		#if ($!isCourseSite)
-			<tr> 
+			<tr>
 				<th>
 					$tlang.getString("sitegen.siteinfolist.term")
 				</th>
@@ -208,7 +207,7 @@ function printPreview(target){
 				</td>
 			</tr>
 			#if ($!allowUpdate)
-			<tr> 
+			<tr>
 				<th>
 					$tlang.getString("sitegen.siteinfolist.courses")
 				</th>
@@ -226,11 +225,11 @@ function printPreview(target){
 			</tr>
 			#end
 		#end
-		
+
 		## As with site email addresses, only show UUID-based site URL if that
 		## is our only option (see http://bugs.sakaiproject.org/jira/browse/SAK-10510)
 		#if ($!siteFriendlyUrls.Empty)
-		<tr> 
+		<tr>
 			<th>
 				$tlang.getString("sitegen.siteinfolist.siteurl")
 			</th>
@@ -241,7 +240,7 @@ function printPreview(target){
 		#else
 		#set ( $aliasIdx = 0 )
 		#foreach($siteFriendlyUrl in $!siteFriendlyUrls)
-		<tr> 
+		<tr>
 			<th>
 				#if ( $aliasIdx == 0 )
 					$tlang.getString("sitegen.siteinfolist.siteurl")
@@ -256,7 +255,7 @@ function printPreview(target){
 		#set ( $aliasIdx = $aliasIdx + 1 )
 		#end
 		#end
-		
+
 
 			<tr>
 				<th>
@@ -266,9 +265,9 @@ function printPreview(target){
 					$validator.escapeHtml($!contactName)#if($!contactEmail && !$contactEmail.equals("")), <a href="mailto:$!contactEmail">$!contactEmail</a>#end
 				</td>
 			</tr>
-		
+
 			#if ($siteJoinable)
-			
+
 				<tr>
 					<th>
 						&nbsp;
@@ -289,9 +288,9 @@ function printPreview(target){
 					#end
 					</td>
 				</tr>
-				
+
 		    #end
-		
+
 			<tr>
 				<th>
 					$tlang.getString("sitegen.siteinfolist.adminsite")
@@ -301,7 +300,7 @@ function printPreview(target){
 				</td>
 			</tr>
 		#if ($!allowUpdate)
-			<tr> 
+			<tr>
 				<th>
 					$tlang.getString("sitegen.siteinfolist.ava")
 				</th>
@@ -325,7 +324,7 @@ function printPreview(target){
 								$tlang.getString("sitegen.siteinfolist.sitepar")
 							#end
 						#end
-						
+
 					#else
 						## unpublished site
 							<span class="highlight">$tlang.getString("sitegen.siteinfolist.siteown")</span>
@@ -369,8 +368,8 @@ function printPreview(target){
 				<td>
 					$!siteCreationDate
 				</td>
-			</tr> 
-		
+			</tr>
+
 		#if ($!isCourseSite)
 			<tr>
 				<th>
@@ -389,13 +388,13 @@ function printPreview(target){
 					<td>
 						<p class="textPanelFooter">$validator.escapeHtml($!siteIcon)</p>
 					</td>
-				</tr>	
+				</tr>
 			#end
 		#end
-		#end			
+		#end
 		</table>
 
-		#set ($desc = $siteDescription) 
+		#set ($desc = $siteDescription)
 		#set ($ell= $tlang.getString("sinfo.list.desc.ellipse"))
 		#if (!$desc || $desc.length() == 0|| $desc ==" "|| $desc =="&nbsp;" || $desc =="" || $desc =="<br>" || $desc =="<br/>" || $desc.isEmpty() || $validator.escapeHtml($desc)=="&lt;br type=&quot;_moz&quot; /&gt;" )
 		#else
@@ -414,7 +413,7 @@ function printPreview(target){
 			#if ($!sections.size() > 0)
 			<h4 class="toggleAnchor specialLink">
 				<span  style="padding-left:1.5em">#if ($!viewRoster) $tlang.getString("sinfo.list.sections")#else $tlang.getString("sinfo.list.sections.student") #end</span>
-			</h4>		
+			</h4>
 			<div class="toggledContent">
 			<dl class="defList" id="accordion">
 				#foreach ($g in $!sections)
@@ -425,17 +424,17 @@ function printPreview(target){
 					<dd class="textPanelFooter instruction">
 						#if ($g.Description)
 							$validator.escapeHtml($g.Description)
-						#end					
-					</dd>				
+						#end
+					</dd>
 				#end
 			</dl>
 			</div>
 			#end
 			#if ($!groups.size() > 0)
-			
+
 			<h4 class="toggleAnchor specialLink">
 				<span  style="padding-left:1.5em">#if ($!viewRoster) $tlang.getString("sinfo.list.groups")#else $tlang.getString("sinfo.list.groups.student") #end</span>
-			</h4>		
+			</h4>
 			<div class="toggledContent">
 			<dl class="defList" id="accordion">
 				#foreach ($g in $!groups)
@@ -446,8 +445,8 @@ function printPreview(target){
 					<dd class="textPanelFooter instruction">
 						#if ($g.Description)
 							$validator.escapeHtml($g.Description)
-						#end					
-					</dd>				
+						#end
+					</dd>
 				#end
 			</dl>
 			</div>
@@ -455,7 +454,7 @@ function printPreview(target){
 			#if ($!joinableGroups.size() > 0)
 				<h4 class="toggleAnchor specialLink">
 					<span  style="padding-left:1.5em">$tlang.getString("sinfo.list.joinable.groups")</span>
-				</h4>		
+				</h4>
 				<div class="toggledContent">
 				<dl class="defList" id="accordion">
 					<table class ="listHier lines nolines"  cellpadding="0" cellspacing="0" border="0">
@@ -519,18 +518,18 @@ function printPreview(target){
 		<table>
 		#if ($providedGroups.size() > 0)
 			#foreach ($group in $providedGroups)
-			<tr>
-				<td>$validator.escapeHtml($group.name)</td>
-				<td>
-					#if ($allowUpdateSiteMembership)
-					<form name="removeGroupForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
-						<input type="hidden" name="groupId" value="$group.id"/>
-						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-						<input type="submit" name="eventSubmit_doRemoveGroup" value="$tlang.getString("sitegen.siteinfolist.remove")"/>
-					</form>
-					#end
-				</td>
-			</tr>
+				<tr>
+					<td>$validator.escapeHtml($group.name)</td>
+					<td>
+						#if ($allowUpdateSiteMembership)
+							<form name="removeGroupForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
+								<input type="hidden" name="groupId" value="$group.id"/>
+								<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+								<input type="submit" name="eventSubmit_doRemoveGroup" value="$tlang.getString("sitegen.siteinfolist.remove")"/>
+							</form>
+						#end
+					</td>
+				</tr>
 			#end
 		#else
 			<tr>
@@ -539,18 +538,18 @@ function printPreview(target){
 		#end
 		</table>
 		#if ($allowAddProvidedGroups)
-		<div>
-		<form method="post" action="#toolForm("SiteAction")">
-			<input type="submit" name="eventSubmit_doExternalGroupsHelper" value="$tlang.getString("sitegen.siteinfolist.addextgroup")"/>
-            <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-        </form>
-		</div>
+            <div>
+                <form method="post" action="#toolForm("SiteAction")">
+                    <input type="submit" name="eventSubmit_doExternalGroupsHelper" value="$tlang.getString("sitegen.siteinfolist.addextgroup")"/>
+                    <input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
+                </form>
+            </div>
 		#end
 	#end
-    #if ($!viewRoster)
-        #if ($participantList.size() > 0)
-            #set($pagesizeFormName="pagesizeFormTop")
-            #pagingPanel($pagesizeFormName)
+	#if ($!viewRoster)
+		#if ($participantList.size() > 0)
+			#set($pagesizeFormName="pagesizeFormTop")
+			#pagingPanel($pagesizeFormName)
 		#end
 		## download link for print out participant list
 		<a href="$printParticipantUrl" title="$!tlang.getString('print')">$!tlang.getString('print')</a>
@@ -559,81 +558,81 @@ function printPreview(target){
 			<table class ="listHier lines nolines"  cellpadding="0" cellspacing="0" border="0" summary ="$tlang.getString("sitegen.siteinfolist.partlist.summary")" id="siteMembers">
 				<tr>
 					<th id="name">
-						<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_name")" title ="$tlang.getString("sitegen.siteinfolist.sortname")"> 
+						<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_name")" title ="$tlang.getString("sitegen.siteinfolist.sortname")">
 							$tlang.getString("sitegen.siteinfolist.name")
-							#if ($currentSortedBy.equals("participant_name")) 
-								#if ($currentSortAsc.equals("true")) 
-									<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnameas")" alt ="$tlang.getString("sitegen.siteinfolist.sortnameas")" /> 
-								#else 
-									<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnamedes")" alt ="$tlang.getString("sitegen.siteinfolist.sortnamedes")" /> 
-								#end 
-							#end 
+							#if ($currentSortedBy.equals("participant_name"))
+								#if ($currentSortAsc.equals("true"))
+									<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnameas")" alt ="$tlang.getString("sitegen.siteinfolist.sortnameas")" />
+								#else
+									<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnamedes")" alt ="$tlang.getString("sitegen.siteinfolist.sortnamedes")" />
+								#end
+							#end
 						</a>
 					</th>
 					#if ($hasProviderSet)
 						<th id="coursename">
-							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_course")" title ="$tlang.getString("sitegen.siteinfolist.sortname1")"> 
+							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_course")" title ="$tlang.getString("sitegen.siteinfolist.sortname1")">
 								$tlang.getString("sitegen.siteinfolist.enrolled")
-								#if ($currentSortedBy.equals("participant_course")) 
-									#if ($currentSortAsc.equals("true")) 
-										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnameas1")" alt ="$tlang.getString("sitegen.siteinfolist.sortnameas1")" /> 
-									#else 
-										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnamedes1")" alt ="$tlang.getString("sitegen.siteinfolist.sortnamedes1")" /> 
-									#end 
-								#end 
+								#if ($currentSortedBy.equals("participant_course"))
+									#if ($currentSortAsc.equals("true"))
+										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnameas1")" alt ="$tlang.getString("sitegen.siteinfolist.sortnameas1")" />
+									#else
+										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnamedes1")" alt ="$tlang.getString("sitegen.siteinfolist.sortnamedes1")" />
+									#end
+								#end
 							</a>
 						</th>
 					#end
 					#if ($!isCourseSite)
 						<th id="id">
-							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_id")" title ="$tlang.getString("sitegen.siteinfolist.sortid")"> 
+							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_id")" title ="$tlang.getString("sitegen.siteinfolist.sortid")">
 								$tlang.getString("sitegen.siteinfolist.id")
-								#if ($currentSortedBy.equals("participant_id")) 
-									#if ($currentSortAsc.equals("true")) 
-										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortidas")" alt ="$tlang.getString("sitegen.siteinfolist.sortidas")" /> 
-									#else 
-										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortiddes")" alt ="$tlang.getString("sitegen.siteinfolist.sortiddes")" /> 
-									#end 
-								#end 
+								#if ($currentSortedBy.equals("participant_id"))
+									#if ($currentSortAsc.equals("true"))
+										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortidas")" alt ="$tlang.getString("sitegen.siteinfolist.sortidas")" />
+									#else
+										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortiddes")" alt ="$tlang.getString("sitegen.siteinfolist.sortiddes")" />
+									#end
+								#end
 							</a>
 						</th>
 						<th id="credits">
-							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_credits")" title ="$tlang.getString("sitegen.siteinfolist.sortcred")"> 
+							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_credits")" title ="$tlang.getString("sitegen.siteinfolist.sortcred")">
 								$tlang.getString("sitegen.siteinfolist.credits")
-								#if ($currentSortedBy.equals("participant_credits")) 
-									#if ($currentSortAsc.equals("true")) 
-										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortcredas")" alt ="$tlang.getString("sitegen.siteinfolist.sortcredas")" /> 
-									#else 
-										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortcreddes")" alt ="$tlang.getString("sitegen.siteinfolist.sortcreddes")" /> 
-									#end 
-								#end 
+								#if ($currentSortedBy.equals("participant_credits"))
+									#if ($currentSortAsc.equals("true"))
+										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortcredas")" alt ="$tlang.getString("sitegen.siteinfolist.sortcredas")" />
+									#else
+										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortcreddes")" alt ="$tlang.getString("sitegen.siteinfolist.sortcreddes")" />
+									#end
+								#end
 							</a>
 						</th>
 					#end
 					<th id="role">
-						<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_role")" title ="$tlang.getString("sitegen.siteinfolist.sortrole")"> 
+						<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_role")" title ="$tlang.getString("sitegen.siteinfolist.sortrole")">
 							$tlang.getString("sitegen.siteinfolist.role")
-							#if ($currentSortedBy.equals("participant_role")) 
-								#if ($currentSortAsc.equals("true")) 
-									<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortroleas")" alt ="$tlang.getString("sitegen.siteinfolist.sortroleas")" /> 
-								#else 
-									<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortroledes")" alt ="$tlang.getString("sitegen.siteinfolist.sortroledes")" /> 
-								#end 
+							#if ($currentSortedBy.equals("participant_role"))
+								#if ($currentSortAsc.equals("true"))
+									<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortroleas")" alt ="$tlang.getString("sitegen.siteinfolist.sortroleas")" />
+								#else
+									<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortroledes")" alt ="$tlang.getString("sitegen.siteinfolist.sortroledes")" />
+								#end
 							#end
-						</a>	
+						</a>
 					</th>
 					#if ($allowUpdateSiteMembership)
 						#if ($!activeInactiveUser && !$!isMyWorkspace)
 							<th id="status">
-								<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_status")" title ="$tlang.getString("sitegen.siteinfolist.sortstatus")"> 
+								<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_status")" title ="$tlang.getString("sitegen.siteinfolist.sortstatus")">
 								$tlang.getString("sitegen.siteinfolist.status")
-								#if ($currentSortedBy.equals("participant_status")) 
-									#if ($currentSortAsc.equals("true")) 
-										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortstatusas")" alt ="$tlang.getString("sitegen.siteinfolist.sortstatusas")" /> 
-									#else 
-										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortstatusdes")" alt ="$tlang.getString("sitegen.siteinfolist.sortstatusdes")" /> 
-									#end 
-								#end 
+								#if ($currentSortedBy.equals("participant_status"))
+									#if ($currentSortAsc.equals("true"))
+										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortstatusas")" alt ="$tlang.getString("sitegen.siteinfolist.sortstatusas")" />
+									#else
+										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortstatusdes")" alt ="$tlang.getString("sitegen.siteinfolist.sortstatusdes")" />
+									#end
+								#end
 							</a>
 							</th>
 						#end
@@ -649,7 +648,7 @@ function printPreview(target){
 						<td headers="name">
 							<h5>
 								#set ($participantName=$participant.getName())
-								#if ($participantName ==", ") 	
+								#if ($participantName ==", ")
 								#else
 									$validator.escapeHtml($participantName)
 								#end
@@ -692,7 +691,7 @@ function printPreview(target){
 										#set( $hasAllowedRole = "true" )
 									#end
 								#end
-							
+
 								#if( $hasAllowedRole == "true" )
 									<label class="skip" for="role$uniqname">$tlang.getString( "sitegen.siteinfolist.role.select" )  $participant.getDisplayId()</label>
 								<select id="role$uniqname" name="role$uniqname">
@@ -710,13 +709,13 @@ function printPreview(target){
 										#else
 												#if( !($r.isProviderOnly() || ($hasRestrictedRole == "true")) )
 											<option value ="$r.Id">
-												$r.Id 
+												$r.Id
 											</option>
 											#end
 										#end
 									#end
 								</select>
-									
+
 							#else
 									$uRole
 								#end
@@ -741,7 +740,7 @@ function printPreview(target){
 									<label  for="remove_$uniqname"><span class="skip">$tlang.getString("sitegen.siteinfolist.remove") $participant.getDisplayId()</span></label><input type="checkbox" name="selectedUser" value="$uniqname" id="remove_$uniqname"
 											#foreach($participantSelected in $selectedParticipants)
 												#if($participantSelected.getUniqname() == $uniqname)
-													checked="checked" 
+													checked="checked"
 												#end
 											#end
 										/>
@@ -769,7 +768,7 @@ function printPreview(target){
 			</div>
 			<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
 		</form>
-		
+
 		<h4>$tlang.getString("sitegen.siteinfolist.roledes")</h4>
 			<dl>
 				#foreach( $role in $allowedRoles )
@@ -793,6 +792,6 @@ function printPreview(target){
 
 					</dd>
 				#end
-			</dl>	
+			</dl>
 	#end
 </div>
