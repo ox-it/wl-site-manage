@@ -552,67 +552,6 @@ function printPreview(target){
 			#set($pagesizeFormName="pagesizeFormTop")
 			#pagingPanel($pagesizeFormName)
 		#end
-						#if ($goPPButton == "true")
-							<form name="prevpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-							    <fieldset><legend>$tlang.getString('gen.previous') $pagesize</legend>
-								<input type="submit" name="eventSubmit_doList_prev" value="&lt;" title="$tlang.getString('gen.previous') $pagesize" />
-                                </fieldset>
-								<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-							</form>
-						#else
-							<form name="prevpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-							    <fieldset><legend>$tlang.getString('gen.previous') $pagesize</legend>
-								<input type="submit" name="eventSubmit_doList_prev" value="&lt;" disabled="disabled" />
-                                </fieldset>
-								<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-							</form>
-						#end
-					#end
-					<form name="pagesizeForm" class="inlineForm" method="post" action="#toolForm("$action")">
-						<input type="hidden" name="eventSubmit_doChange_pagesize" value="changepagesize" />
-						<label for="selectPageSize" class="skip">$tlang.getString("sitegen.siteinfolist.view.pagesize")</label>
-						<select id="selectPageSize" name="selectPageSize" onchange="document.pagesizeForm.submit();">
-							#foreach ($i in $!pagesizes)
-								<option value="$i" #if($pagesize == $i) selected="selected" #end>$tlang.getString("sitegen.siteinfolist.show") $i $tlang.getString("sitegen.siteinfolist.itemspage")</option>
-							#end
-						</select>
-						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-					</form>
-					#if ($pagesize != 0)
-						#if ($goNPButton == "true")
-							<form name="nextpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-							    <fieldset><legend>$tlang.getString('gen.next') $pagesize</legend>
-								<input type="submit" name="eventSubmit_doList_next" value="&gt;" title="$tlang.getString('gen.next') $pagesize" />
-                                </fieldset>
-								<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-							</form>
-						#else
-							<form name="nextpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-							    <fieldset><legend>$tlang.getString('gen.next') $pagesize</legend>
-								<input type="submit" name="eventSubmit_doList_next" value="&gt;" disabled="disabled" />
-                                </fieldset>
-								<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-							</form>
-						#end
-						#if ($goLPButton == "true")
-							<form name="lastpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-							    <fieldset><legend>$tlang.getString('gen.last')</legend>
-								<input type="submit" name="eventSubmit_doList_last" value="&gt;|" title="$tlang.getString('gen.last')" />
-                                </fieldset>
-								<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-							</form>
-						#else
-							<form name="lastpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
-							    <fieldset><legend>$tlang.getString('gen.last')</legend>
-								<input type="submit" name="eventSubmit_doList_last" value="&gt;|" disabled="disabled" />
-                                </fieldset>
-								<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-							</form>
-						#end
-					#end
-				</div>
-			</div>
-		#end
 		## download link for print out participant list
 		<a href="$printParticipantUrl" title="$!tlang.getString('print')">$!tlang.getString('print')</a>
 		<hr />
