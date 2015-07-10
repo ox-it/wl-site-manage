@@ -161,7 +161,7 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
 		 UIInput groupDescr = UIInput.make(groupForm, "group_description", "#{SiteManageGroupSectionRoleHandler.description}", groupDescription); 
 		 UILabelTargetDecorator.targetLabel(groupDescrLabel, groupDescr);
 		 
-		 //Joinable Set:
+		 //Joinable Group:
 		 UIMessage joinableSetLabel = UIMessage.make(groupForm, "group_joinable_set_label", "group.joinable.set");
 		 Set<String> joinableSets = new HashSet<String>();
 		 joinableSets.add("");
