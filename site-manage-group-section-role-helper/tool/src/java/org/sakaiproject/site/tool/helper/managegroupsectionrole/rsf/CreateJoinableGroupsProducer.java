@@ -10,15 +10,7 @@ import org.sakaiproject.site.tool.helper.managegroupsectionrole.impl.SiteManageG
 
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.messageutil.TargettedMessageList;
-import uk.org.ponder.rsf.components.UIBoundBoolean;
-import uk.org.ponder.rsf.components.UIBranchContainer;
-import uk.org.ponder.rsf.components.UICommand;
-import uk.org.ponder.rsf.components.UIContainer;
-import uk.org.ponder.rsf.components.UIForm;
-import uk.org.ponder.rsf.components.UIInput;
-import uk.org.ponder.rsf.components.UIMessage;
-import uk.org.ponder.rsf.components.UIOutput;
-import uk.org.ponder.rsf.components.UIDeletionBinding;
+import uk.org.ponder.rsf.components.*;
 import uk.org.ponder.rsf.components.decorators.UICSSDecorator;
 import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
 import uk.org.ponder.rsf.flow.ARIResult;
@@ -122,7 +114,9 @@ public class CreateJoinableGroupsProducer implements ViewComponentProducer, Acti
         
         if(edit){
         	//Delete Set button:
-        	UICommand.make(groupForm, "delete", messageLocator.getMessage("group.joinable.delete"), "#{SiteManageGroupSectionRoleHandler.processDeleteJoinableSet}");
+        	//UICommand.make(groupForm, "delete", messageLocator.getMessage("group.joinable.delete"), "#{SiteManageGroupSectionRoleHandler.processDeleteJoinableSet}");
+			UIForm deleteGroupsForm = UIForm.make(tofill, "delete-groups-form",new JoinableGroupDelViewParameters(JoinableGroupDelProducer.VIEW_ID, joinableSetId));
+			UICommand.make(deleteGroupsForm, "delete", messageLocator.getMessage("group.joinable.delete"));
         }
       //process any messages
         tml = handler.messages;
