@@ -4,9 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.tool.helper.managegroupsectionrole.impl.SiteManageGroupSectionRoleHandler;
-import uk.ac.cam.caret.sakai.rsf.producers.FrameAdjustingProducer;
 import uk.org.ponder.messageutil.MessageLocator;
-import uk.org.ponder.messageutil.TargettedMessageList;
 import uk.org.ponder.rsf.components.*;
 import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
 import uk.org.ponder.rsf.flow.ARIResult;
@@ -31,34 +29,27 @@ implements ViewComponentProducer, ActionResultInterceptor, ViewParamsReporter {
 	public static final String VIEW_ID = "JoinableGroupDel";
 	public MessageLocator messageLocator;
 	public SiteManageGroupSectionRoleHandler handler;
-	public FrameAdjustingProducer frameAdjustingProducer;
+
 
 	public String getViewID() {
 		return VIEW_ID;
 	}
 
-	private TargettedMessageList tml;
-	public void setTargettedMessageList(TargettedMessageList tml) {
-		this.tml = tml;
-	}
 	public void fillComponents(UIContainer tofill, ViewParameters viewparams, ComponentChecker arg2) {
 
 		UIOutput.make(tofill, "page-title", messageLocator.getMessage("editgroup.removegroups"));
 		
 		UIForm deleteForm = UIForm.make(tofill, "delete-jg-confirm-form");
-		 
-		boolean renderDelete = false;
 
 		String joinableSetId = ((JoinableGroupDelViewParameters) viewparams).id;
 		boolean delete = joinableSetId != null && !"".equals(joinableSetId);
-		if(delete){
-			handler.joinableSetName = joinableSetId;
-			handler.joinableSetNameOrig = joinableSetId;
-		}
+
 		UIOutput.make(deleteForm, "prompt", messageLocator.getMessage("editgroup.removegroups"));
-		UILabelTargetDecorator.targetLabel(UIMessage.make(deleteForm, "group-title-group", "group.joinable.setname"), UIOutput.make(deleteForm, "groupTitle-group", joinableSetId));
+		//process any messages
+		UIBranchContainer errorRow = UIBranchContainer.make(tofill,"error-row:", "0");
 
 		if (delete) {
+			UILabelTargetDecorator.targetLabel(UIMessage.make(deleteForm, "group-title-group", "group.joinable.setname"), UIOutput.make(deleteForm, "groupTitle-group", joinableSetId));
 			UIOutput.make(deleteForm, "current-groups-title", messageLocator.getMessage("group.joinable.currentgroups"));
 			int i = 0;
 			for(Group group : handler.site.getGroups()){
@@ -69,17 +60,21 @@ implements ViewComponentProducer, ActionResultInterceptor, ViewParamsReporter {
 					i++;
 				}
 			}
+			UICommand.make(deleteForm, "delete-groups",  UIMessage.make("editgroup.removegroups"), "#{SiteManageGroupSectionRoleHandler.processDeleteJoinableSet}");
+			UIMessage.make(errorRow,"error","editgroup.groupdel.alert", new String[]{});
 
 		}
-		UICommand.make(deleteForm, "delete-groups",  UIMessage.make("editgroup.removegroups"), "#{SiteManageGroupSectionRoleHandler.processDeleteJoinableSet}");
+		else{
+			UIMessage.make(errorRow,"error","delete_group_nogroup", new String[]{});
+		}
+
 		//Set the cancel button to redirect to EditJoinableSet form
 		UIForm deleteJoinableSetForm = UIForm.make(tofill, "delete-jg-form",new CreateJoinableGroupViewParameters(CreateJoinableGroupsProducer.VIEW_ID, joinableSetId));
 		UICommand cancel = UICommand.make(deleteJoinableSetForm, "cancel", UIMessage.make("editgroup.cancel"));
 		cancel.parameters.add(new UIDeletionBinding("#{destroyScope.resultScope}"));
    
-		//process any messages
-		UIBranchContainer errorRow = UIBranchContainer.make(tofill,"error-row:", "0");
-		UIMessage.make(errorRow,"error","editgroup.groupdel.alert", new String[]{});
+
+
 	}
 
 	@Override
