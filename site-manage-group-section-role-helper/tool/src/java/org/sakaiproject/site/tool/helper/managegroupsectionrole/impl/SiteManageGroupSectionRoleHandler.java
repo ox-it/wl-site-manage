@@ -1647,7 +1647,7 @@ public class SiteManageGroupSectionRoleHandler {
     	
     	return "success";
     }
-    
+
     public String processDeleteJoinableSet(){
     	// reset the warning messages
     	resetTargettedMessageList();
