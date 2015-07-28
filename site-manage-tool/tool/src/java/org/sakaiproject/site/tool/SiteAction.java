@@ -8097,10 +8097,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 			// None of this helps other users who may try to reload an aliased site 
 			// URL that no longer resolves.
 			if ( updateSiteRefAliases ) {
-				sendParentRedirect((HttpServletResponse) ThreadLocalManager.get(RequestFilter.CURRENT_HTTP_RESPONSE),
-					getDefaultSiteUrl(ToolManager.getCurrentPlacement().getContext()) + "/" +
-					SiteService.PAGE_SUBTYPE + "/" + 
-					((ToolConfiguration) ToolManager.getCurrentPlacement()).getPageId());
+				sendParentRedirect((HttpServletResponse) ThreadLocalManager.get(RequestFilter.CURRENT_HTTP_RESPONSE), getCurrentSiteUrl());
 			} else {
 				scheduleTopRefresh();
 			}
@@ -15177,10 +15174,11 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 
 		final String id = params.get("itemReference");
 		String siteTitle = null;
-		
+		Site site = null;
 		if (id != null)	{
 			try	{
-				siteTitle = SiteService.getSite(id).getTitle();
+				site = SiteService.getSite(id);
+				siteTitle = site.getTitle();
 				SiteService.unjoin(id);
 				String msg = rb.getString("sitinfimp.youhave") + " " + siteTitle;
 				addAlert(state, msg);
@@ -15198,10 +15196,18 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 						+ rb.getString("sitinfimp.sitebeing") + " ");
 			}
 		}
-		
-		// refresh the whole page
-		scheduleTopRefresh();
-		
+
+		String redirectUrl= null;
+		org.sakaiproject.component.api.ServerConfigurationService scs = (org.sakaiproject.component.api.ServerConfigurationService) ComponentManager.get(
+				org.sakaiproject.component.api.ServerConfigurationService.class);
+		//Check if user has access to the site even when they unjoin it, could be beacuse site is public or because of their role.
+		if(site != null && SiteService.allowAccessSite(site.getId())){
+			redirectUrl = getCurrentSiteUrl();
+		}else{
+			redirectUrl = scs.getPortalUrl();
+		}
+		sendParentRedirect((HttpServletResponse) ThreadLocalManager.get(RequestFilter.CURRENT_HTTP_RESPONSE), redirectUrl);
+
 		/*
 		 * It would have been nice to redirect to the portal 
 		 * if the user no longer has access to view the site;
@@ -15421,6 +15427,17 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 	 */
 	private boolean isTwoFactorRequired(Site site) {
 		return twoFactorAuthentication.isTwoFactorRequired(site.getReference());
+	}
+
+	/**
+	 * Get the current Site Url
+	 * @return returns the String url for the current site
+	 */
+	private String getCurrentSiteUrl(){
+		return getDefaultSiteUrl(ToolManager.getCurrentPlacement().getContext()) + "/" +
+				SiteService.PAGE_SUBTYPE + "/" +
+				((ToolConfiguration) ToolManager.getCurrentPlacement()).getPageId();
+
 	}
 	
  }
