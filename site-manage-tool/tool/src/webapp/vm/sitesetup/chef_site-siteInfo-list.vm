@@ -1,6 +1,6 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-siteInfo-list.vm,v 1.6 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
 
-## This macro has been defined in order to reuse the paging panel once at the top of the participant group table and once at the bottom of the participant group table. JIRA Ref -WL3736
+## This macro has been defined in order to reuse the paging panel once at the top of the participant group table and once at the bottom of the participant group table.
 #macro(pagingPanel $pagesizeFormName)
 <div class="navPanel">
 	<div class="viewNav">
