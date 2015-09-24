@@ -771,7 +771,9 @@ function printPreview(target){
 			</div>
 			<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
 		</form>
-		
+
+		#chef_flashnotif()
+
 		<h4>$tlang.getString("sitegen.siteinfolist.roledes")</h4>
 			<dl>
 				#foreach( $role in $allowedRoles )
