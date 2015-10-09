@@ -755,10 +755,6 @@ function printPreview(target){
 				#end
 			</table>
 			<div class="act">
-			#if ($participantList.size() > 10)
-				#set($pagesizeFormName="pagesizeFormBottom")
-				#pagingPanel($pagesizeFormName)
-			#end
 			#if($allowUpdateSiteMembership)
 				<input type="submit" accesskey="s" class="active" name="eventSubmit_doUpdate_participant" value="$tlang.getString("sitegen.siteinfolist.update")" />
 			#end
@@ -771,7 +767,10 @@ function printPreview(target){
 			</div>
 			<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
 		</form>
-		
+		#if ($participantList.size() > 10)
+			#set($pagesizeFormName="pagesizeFormBottom")
+			#pagingPanel($pagesizeFormName)
+		#end
 		<h4>$tlang.getString("sitegen.siteinfolist.roledes")</h4>
 			<dl>
 				#foreach( $role in $allowedRoles )
