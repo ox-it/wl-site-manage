@@ -1035,7 +1035,7 @@ public class SiteAddParticipantHandler {
 				                TargettedMessage.SEVERITY_ERROR));
 						targettedMessageList.addMessage(new TargettedMessage("java.theemail", "no text"));
 					} else if (userEid != null
-							&& !Validator.isValidDomain(userEid)) {
+							&& !Validator. isAllowedLocalEmailDomain(userEid)) {
 						// wrong string inside nonOfficialAccount id
 						targettedMessageList.addMessage(new TargettedMessage("java.emailbaddomain",
 								new Object[] { userEid, messageLocator.getMessage("nonOfficialAccountSectionTitle")}, 
