@@ -428,7 +428,9 @@ public class SiteAction extends PagedResourceActionII {
 	private static final String STATE_NEW_SITE_STATUS_ISPUBLISHED = "newSiteStatusIsPublished";
 	private static final String STATE_NEW_SITE_STATUS_TITLE = "newSiteStatusTitle";
 	private static final String STATE_NEW_SITE_STATUS_ID = "newSiteStatusID";
-	
+	private static final String STATE_DUPE_SITE_STATUS_ID = "dupeSiteStatusID";
+	private static final String STATE_DUPE_SITE_URL = "dupeSiteUrl";
+
 
 	// %%% get rid of the IdAndText tool lists and just use ToolConfiguration or
 	// ToolRegistration lists
@@ -1028,7 +1030,7 @@ public class SiteAction extends PagedResourceActionII {
 			state.removeAttribute(SiteHelper.SITE_CREATE_START);
 			state.removeAttribute(SiteHelper.SITE_CREATE_CANCELLED);
 			state.removeAttribute(SiteHelper.SITE_CREATE_SITE_ID);
-			
+
 		}
 		
 		super.initState(state, portlet, rundata);
@@ -1308,6 +1310,11 @@ public class SiteAction extends PagedResourceActionII {
 
 		String template = null;
 		context.put("action", CONTEXT_ACTION);
+		ToolSession session = SessionManager.getCurrentToolSession();
+		if(session.getAttribute(ATTR_TOP_REFRESH) != null && session.getAttribute(ATTR_TOP_REFRESH).equals(Boolean.TRUE)) {
+		    session.removeAttribute(ATTR_TOP_REFRESH);
+			return "sitesetup/chef_refresh";
+		}
 
 		// updatePortlet(state, portlet, data);
 		if (state.getAttribute(STATE_INITIALIZED) == null) {
@@ -1644,10 +1651,25 @@ public class SiteAction extends PagedResourceActionII {
 			
 			context.put("allowAddSite",allowAddSite);
 
-			//SAK-23468 put create variables into context
-            		addSiteCreationValuesIntoContext(context,state);
+			//Add flash notification when new site is created
+			if(state.getAttribute(STATE_NEW_SITE_STATUS_ID) != null){
+				String  flashNotifMsg = "<a title=\"" + state.getAttribute(STATE_NEW_SITE_STATUS_TITLE) + "\"href=\"/portal/site/"
+						+state.getAttribute(STATE_NEW_SITE_STATUS_ID) + "\" target=\"_top\">"
+						+state.getAttribute(STATE_NEW_SITE_STATUS_TITLE)+"</a>" +" "
+						+rb.getString("sitdup.hasbeedup");
+				addFlashNotif(state,flashNotifMsg);
+				StringBuilder sbFlashNotifAction =  new StringBuilder();
+				if (state.getAttribute(STATE_NEW_SITE_STATUS_ISPUBLISHED).equals(Boolean.FALSE)) {
+					sbFlashNotifAction = new StringBuilder();
+					sbFlashNotifAction.append("<div id=\"newSiteAlertActions\" class=\"newSiteAlertActions\">");
+					sbFlashNotifAction.append("<a href=\"#\" id=\"newSiteAlertPublish\" class=\""+state.getAttribute(STATE_NEW_SITE_STATUS_ID)+"\""+">" + rb.getString("sitetype.publishSite") + "</a>");
+					sbFlashNotifAction.append("<span id=\"newSiteAlertPublishMess\" class=\"messageSuccess\" style=\"display:none\">" + rb.getString("list.publi") + "</span>");
+					sbFlashNotifAction.append("</div>");
+					addFlashNotif(state, sbFlashNotifAction.toString());
+				}
+				clearNewSiteStateParameters(state);
+			}
 
-			
 			return (String) getContext(data).get("template") + TEMPLATE[0];
 		case 1:
 			/*
@@ -1962,7 +1984,14 @@ public class SiteAction extends PagedResourceActionII {
 						}
 					}
 				}
-				
+
+				if (state.getAttribute(SITE_DUPLICATED) != null) {
+					String flashNotifMsg = "<a title=\""+state.getAttribute(SITE_DUPLICATED_NAME) +"\" href=\""+state.getAttribute(STATE_DUPE_SITE_URL)+"\" target=\"_top\">"+state.getAttribute(SITE_DUPLICATED_NAME)+"</a>";
+					addFlashNotif(state, rb.getString("sitdup.dupsit") + " " + flashNotifMsg + " " + rb.getString("sitdup.hasbeedup"));
+				}
+				state.removeAttribute(SITE_DUPLICATED);
+				state.removeAttribute(SITE_DUPLICATED_NAME);
+
 				context.put("siteFriendlyUrls", getSiteUrlsForSite(site));
 				context.put("siteDefaultUrl", getDefaultSiteUrl(siteId));
 				
@@ -2793,7 +2822,7 @@ public class SiteAction extends PagedResourceActionII {
 					.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 			context.put(STATE_TOOL_REGISTRATION_SELECTED_LIST,
 					toolRegistrationSelectedList); // String toolId's
-			
+
 			// all info related to multiple tools
 			multipleToolIntoContext(context, state);
 			
@@ -3034,7 +3063,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("duplicatedName", state
 						.getAttribute(SITE_DUPLICATED_NAME));
 			}
-			
+
 			// SAK-20797 - display checkboxes only if sitespecific value exists
 			long quota = getSiteSpecificQuota(site);
 			if (quota > 0) {
@@ -4058,36 +4087,21 @@ public class SiteAction extends PagedResourceActionII {
 		context.put(STATE_MULTIPLE_TOOL_INSTANCE_SELECTED, state.getAttribute(STATE_MULTIPLE_TOOL_INSTANCE_SELECTED));
 	}
 
-
-	// SAK-23468 If this is after an add site, the 
-	private void addSiteCreationValuesIntoContext(Context context, SessionState state) {
-		String siteID = (String) state.getAttribute(STATE_NEW_SITE_STATUS_ID);
-		if (siteID != null) {  // make sure this message is only seen immediately after a new site is created.
-			context.put(STATE_NEW_SITE_STATUS_ISPUBLISHED, state.getAttribute(STATE_NEW_SITE_STATUS_ISPUBLISHED));
-			String siteTitle = (String) state.getAttribute(STATE_NEW_SITE_STATUS_TITLE);
-			context.put(STATE_NEW_SITE_STATUS_TITLE, siteTitle);
-			context.put(STATE_NEW_SITE_STATUS_ID, siteID);
-			// remove the values from state so the values are gone on the next call to chef_site-list
-			//clearNewSiteStateParameters(state);
-		}
-	}	
-	
-	
-	// SAK-23468 
+	// SAK-23468
 	private void setNewSiteStateParameters(Site site, SessionState state){
 		if (site != null) {
 			state.setAttribute(STATE_NEW_SITE_STATUS_ISPUBLISHED, Boolean.valueOf(site.isPublished()));
 			state.setAttribute(STATE_NEW_SITE_STATUS_ID, site.getId());
 			state.setAttribute(STATE_NEW_SITE_STATUS_TITLE, site.getTitle());
 		}
-	}	
+	}
 
 	// SAK-23468 
-        private void clearNewSiteStateParameters(SessionState state) {
+	private void clearNewSiteStateParameters(SessionState state) {
 		state.removeAttribute(STATE_NEW_SITE_STATUS_ISPUBLISHED);
 		state.removeAttribute(STATE_NEW_SITE_STATUS_ID);
 		state.removeAttribute(STATE_NEW_SITE_STATUS_TITLE);
-
+		state.removeAttribute(STATE_DUPE_SITE_URL);
 	}
 	
 	/**
@@ -6597,8 +6611,8 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 			
 			// SAK-23468  Add new site params to state
 			setNewSiteStateParameters(site, state);
-			
-			
+
+
 			// Since the option to input aliases is presented to users prior to
 			// the new site actually being created, it doesn't really make sense 
 			// to check permissions on the newly created site when we assign 
@@ -7894,7 +7908,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 	public void doMenu_siteInfo_duplicate(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		
+
 		if (canChooseAdminSite(data, state)) {
 			// Need to reuse the same template...
 			state.setAttribute(STATE_TEMPLATE_INDEX, "65");
@@ -9485,7 +9499,8 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 								
 								// save again
 								SiteService.save(site);
-								
+								state.setAttribute(STATE_DUPE_SITE_STATUS_ID, site.getId());
+								state.setAttribute(STATE_DUPE_SITE_URL, site.getUrl());
 								String realm = SiteService.siteReference(site.getId());
 								try 
 								{
@@ -9533,10 +9548,6 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 				}
 
 				if (state.getAttribute(STATE_MESSAGE) == null) {
-					// site duplication confirmed
-					state.removeAttribute(SITE_DUPLICATED);
-					state.removeAttribute(SITE_DUPLICATED_NAME);
-
 					// return to the list view
 					state.setAttribute(STATE_TEMPLATE_INDEX, "12");
 				}
@@ -11820,7 +11831,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 			}
 		}
 	} // addNewSite
-	
+
 	/**
 	 * created based on setTermListForContext - Denny
 	 * @param context
@@ -14751,7 +14762,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 	{
 		ToolSession toolSession = SessionManager.getCurrentToolSession();
 		SessionState state = getState(req);
- 
+
 		if (SITE_MODE_HELPER_DONE.equals(state.getAttribute(STATE_SITE_MODE)))
 		{
 			String url = (String) SessionManager.getCurrentToolSession().getAttribute(Tool.HELPER_DONE_URL);

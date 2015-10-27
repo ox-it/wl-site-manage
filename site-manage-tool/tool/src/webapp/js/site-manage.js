@@ -823,19 +823,7 @@ var setupCategTools = function(){
 };
 
 var setupRecentSite = function(){
-
-    var target = $('#newSiteAlert').attr('class');
-
-    if (sessionStorage.getItem(target)) {
-        $('#newSiteAlert').hide();
-    }
-  
-    $('.newSiteAlertClose').click(function(e){
-        e.preventDefault();
-        $(this).closest('div').fadeOut('slow');
-        sessionStorage.setItem(target, true);
-    })
-
+    var target = $('#newSiteAlertPublish').attr('class');
     $('#newSiteAlertPublish').click(function(e){
         e.preventDefault();
         var reqUrl = '/direct/site/' + target + '/edit';
@@ -854,7 +842,7 @@ var setupRecentSite = function(){
                         $(this).fadeIn('1000');
                     });
                 });
-                
+
             }
         });
         

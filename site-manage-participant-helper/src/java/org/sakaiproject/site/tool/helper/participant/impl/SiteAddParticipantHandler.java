@@ -49,6 +49,7 @@ import org.sakaiproject.user.api.UserPermissionException;
 import org.sakaiproject.userauditservice.api.UserAuditRegistration;
 import org.sakaiproject.userauditservice.api.UserAuditService;
 
+import org.sakaiproject.util.Validator;
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.messageutil.TargettedMessage;
 import uk.org.ponder.messageutil.TargettedMessageList;
@@ -1034,7 +1035,7 @@ public class SiteAddParticipantHandler {
 				                TargettedMessage.SEVERITY_ERROR));
 						targettedMessageList.addMessage(new TargettedMessage("java.theemail", "no text"));
 					} else if (userEid != null
-							&& !isValidDomain(userEid)) {
+							&& !Validator. isAllowedLocalEmailDomain(userEid)) {
 						// wrong string inside nonOfficialAccount id
 						targettedMessageList.addMessage(new TargettedMessage("java.emailbaddomain",
 								new Object[] { userEid, messageLocator.getMessage("nonOfficialAccountSectionTitle")}, 
@@ -1157,26 +1158,6 @@ public class SiteAddParticipantHandler {
 		return;
 
 	} // checkAddParticipant
-    
-
-	private boolean isValidDomain(String email) {
-		String invalidNonOfficialAccountString = getServerConfigurationString("invalidNonOfficialAccountString", null);
-
-		if (invalidNonOfficialAccountString != null) {
-			String[] invalidDomains = invalidNonOfficialAccountString.split(",");
-
-			for (int i = 0; i < invalidDomains.length; i++) {
-				String domain = invalidDomains[i].trim();
-
-				if (email.toLowerCase().indexOf(domain.toLowerCase()) != -1) {
-					return false;
-				}
-			}
-		}
-		return true;
-		
-		
-	}
     
 	private boolean isValidMail(String email) {
 		if (email == null || "".equals(email))
