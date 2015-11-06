@@ -771,6 +771,7 @@ function printPreview(target){
 			#set($pagesizeFormName="pagesizeFormBottom")
 			#pagingPanel($pagesizeFormName)
 		#end
+		#chef_flashnotif()
 		<h4>$tlang.getString("sitegen.siteinfolist.roledes")</h4>
 			<dl>
 				#foreach( $role in $allowedRoles )
