@@ -5310,7 +5310,7 @@ public class SiteAction extends PagedResourceActionII {
 						Site site = SiteService.getSite(id);
 						site_title = site.getTitle();
 						SiteService.removeSite(site);
-						M_log.debug("Removed site: " + site.getId());
+						M_log.debug("Removed site " + site_title + ": "+ site.getId());
 					} catch (IdUnusedException e) {
 						M_log.warn(this +".doSite_delete_confirmed - IdUnusedException " + id, e);
 						addAlert(state, rb.getFormattedMessage("java.couldnt", new Object[]{site_title,id}));
