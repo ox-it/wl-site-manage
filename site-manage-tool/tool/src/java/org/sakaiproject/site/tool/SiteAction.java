@@ -663,6 +663,8 @@ public class SiteAction extends PagedResourceActionII {
 
 	private static final String STATE_CM_AUTHORIZER_SECTIONS = "site_cm_authorizer_sections";
 
+	private static final String STATE_SITE_PARTICIPANT_LIST = "site_participants";
+
 	private String cmSubjectCategory;
 
 	private boolean warnedNoSubjectCategory = false;
@@ -1219,6 +1221,7 @@ public class SiteAction extends PagedResourceActionII {
 		// lti tools
 		state.removeAttribute(STATE_LTITOOL_EXISTING_SELECTED_LIST);
 		state.removeAttribute(STATE_LTITOOL_SELECTED_LIST);
+		state.removeAttribute(STATE_SITE_PARTICIPANT_LIST);
                 
         // bjones86 - SAK-24423 - remove joinable site settings from the state
 		JoinableSiteSettings.removeJoinableSiteSettingsFromState( state );
@@ -8540,7 +8543,16 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 				// init variables useful for actual edits and mainainersAfterProposedChanges check
                                 AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realmId);
 				String maintainRoleString = realmEdit.getMaintainRole();
-				List participants = collectionToList((Collection) state.getAttribute(STATE_PARTICIPANT_LIST));
+				List participants;
+				//Check for search term
+				String search = (String)state.getAttribute(STATE_SEARCH);
+				if(StringUtils.isNotBlank(search)){
+					//search is true, get the complete list of participants from the other attribute.
+					participants = collectionToList((Collection) state.getAttribute(STATE_SITE_PARTICIPANT_LIST));
+				}
+				else{
+					participants = collectionToList((Collection) state.getAttribute(STATE_PARTICIPANT_LIST));
+				}
 
 				// SAK 23029 Test proposed removals/updates; reject all where activeMainainer count would = 0 if all proposed changes were made
 				List<Participant> maintainersAfterProposedChanges = testProposedUpdates(participants, params, maintainRoleString);
@@ -10655,11 +10667,13 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 			for(Object object : participants){
 				Participant participant = (Participant)object;
 				//if search term is in the display name or in display Id, add into the list
-				if(participant.getDisplayName().contains(search) || participant.getDisplayId().contains(search)){
+				if (StringUtils.containsIgnoreCase(participant.getDisplayName(), search) || StringUtils.containsIgnoreCase(participant.getDisplayId(),search)){
 					members.add(participant);
 				}
 			}
 			state.setAttribute(STATE_PARTICIPANT_LIST, members);
+			//STATE_PARTICIPANT_LIST will contain members which satisfy search criteria therefore saving original participants list in new attribute
+			state.setAttribute(STATE_SITE_PARTICIPANT_LIST, participants);
 			return members;
 		}
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
