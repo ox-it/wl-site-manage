@@ -4683,6 +4683,8 @@ public class SiteAction extends PagedResourceActionII {
 		if (search == null) {
 			state.removeAttribute(STATE_SEARCH);
 		} else {
+			//search item is present, if the result was paged clear the top position from the state
+			state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
 			state.setAttribute(STATE_SEARCH, search);
 		}
 
